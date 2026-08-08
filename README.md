@@ -53,6 +53,17 @@ python examples/brainstorm.py
 # Scaling test (3 → 100 agents)
 python examples/scaling_auto.py
 
+## Experiments
+
+### Sensor Fusion (Robust Consensus)
+Distributed outlier detection via Median + MAD on synchronized omega values.
+
+```bash
+python examples/sensor_fusion_v8.py
+
+Result: 20% outliers → error 0.06°C (vs 2.56°C simple mean).
+Mechanism: Agents with omega deviating >3×MAD from median are iteratively dropped.
+No central authority — fully decentralized consensus.
 # Token economy comparison
 python examples/token_economy_v2.py
 Supported LLM Adapters
