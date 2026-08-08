@@ -1,0 +1,67 @@
+# -*- coding: utf-8 -*-
+"""
+AutoTuner v3 — больше связей, легче цели.
+"""
+
+from typing import Dict
+
+
+class AutoTuner:
+    @staticmethod
+    def tune(n_agents: int) -> Dict:
+        # Больше связей = лучше синхронизация
+        k = min(max(n_agents // 2, 3), 10) if n_agents <= 20 else min(n_agents // 3, 15)
+
+        if n_agents <= 5:
+            return {
+                "k_sparse": k,
+                "exc_ratio": 0.85,
+                "noise": 0.02,
+                "coupling_boost": 1.0,
+                "sleep_every": 300,
+                "goal_interval": 100,
+                "goal_threshold": 0.35,
+            }
+
+        if n_agents <= 12:
+            return {
+                "k_sparse": k,
+                "exc_ratio": 0.88,
+                "noise": 0.02,
+                "coupling_boost": 2.0,
+                "sleep_every": 350,
+                "goal_interval": 100,
+                "goal_threshold": 0.35,
+            }
+
+        if n_agents <= 30:
+            return {
+                "k_sparse": k,
+                "exc_ratio": 0.90,
+                "noise": 0.018,
+                "coupling_boost": 2.5,
+                "sleep_every": 400,
+                "goal_interval": 150,
+                "goal_threshold": 0.30,
+            }
+
+        if n_agents <= 60:
+            return {
+                "k_sparse": k,
+                "exc_ratio": 0.93,
+                "noise": 0.015,
+                "coupling_boost": 3.0,
+                "sleep_every": 500,
+                "goal_interval": 200,
+                "goal_threshold": 0.25,
+            }
+
+        return {
+            "k_sparse": k,
+            "exc_ratio": 0.95,
+            "noise": 0.01,
+            "coupling_boost": 4.0,
+            "sleep_every": 600,
+            "goal_interval": 250,
+            "goal_threshold": 0.20,
+        }
