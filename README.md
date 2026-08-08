@@ -2,7 +2,9 @@
 
 &gt; Decentralized multi-agent intelligence via Kuramoto synchronization and shared orbital resonance.
 
-[![Tests](https://img.shields.io/badge/tests-10%2F10%20passed-brightgreen)]()
+[![Tests](https://github.com/aknazev8941-web/molecular-ai/actions/workflows/tests.yml/badge.svg)](https://github.com/aknazev8941-web/molecular-ai/actions)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()
+[![License](https://img.shields.io/badge/license-MIT-green)]()
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-green)]()
 
