@@ -28,7 +28,7 @@ class DeepSeekAdapter(LLMAdapter):
     def _env_key(self) -> str:
         return "DEEPSEEK_API_KEY"
 
-        def _call_api(self, prompt: str) -> str:
+    def _call_api(self, prompt: str) -> str:
         url = f"{self.base_url}/chat/completions"
         payload = {
             "model": self.model,
