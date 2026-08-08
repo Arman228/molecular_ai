@@ -37,7 +37,7 @@ Shared Field
 ## Quick Start
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/molecular-ai.git
+git clone https://github.com/aknazev8941-web/molecular-ai.git
 cd molecular-ai
 pip install -r requirements.txt
 pytest tests/ -v
