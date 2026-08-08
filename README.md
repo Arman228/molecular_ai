@@ -64,6 +64,19 @@ python examples/sensor_fusion_v8.py
 Result: 20% outliers → error 0.06°C (vs 2.56°C simple mean).
 Mechanism: Agents with omega deviating >3×MAD from median are iteratively dropped.
 No central authority — fully decentralized consensus.
+
+### Sensor Fusion v6 (latest)
+- **Method:** Two-Pass Median + Per-Axis Reputation Pre-Filter
+- **Outlier load:** 40% agents × 60% axes (~4.8/dimension)
+- **Results vs IQR k=1.5 baseline:**
+  | Dimension | Improvement |
+  |-----------|-------------|
+  | Temperature | 18.5% |
+  | Humidity | 24.8% |
+  | Pressure | 21.9% |
+  | CO2 | 16.9% |
+  | Noise | 17.5% |
+- **File:** `examples/sensor_fusion_multidim_reputation_v6.py`
 # Token economy comparison
 python examples/token_economy_v2.py
 Supported LLM Adapters
