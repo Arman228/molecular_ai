@@ -78,6 +78,7 @@ Two-pass median: breakdown point ~50% outliers
 Per-axis reputation: min_rep=0.5, window=50 rounds
 Consensus: median (not weighted mean), resistant to residual outliers 
 
+
 Files
 Table
 File	Description
@@ -88,7 +89,35 @@ tests/test_sensor_fusion.py
 Run
 bash
 pytest tests/test_sensor_fusion.py -v
-python examples/sensor_fusion_multidim_reputation_v7.py
+python examples/sensor_fusion_multidim_reputation_v7.py 
+
+## Multi-Agent Code Generation
+
+4 agents (Generator, Reviewer, Optimizer, Tester) generate code via orbital consensus.
+
+```bash
+python examples/code_generation_v3_1.py
+
+Results (Mock mode, no API key):
+Winner: Optimizer (score=1.03 vs Generator 0.53)
+Generated: in-place quicksort with Lomuto partition
+Tests: 6/6 pytest passed + manual verification passed
+Sync r: 0.500
+Architecture:
+plain
+Generator → Reviewer → Optimizer → Tester
+     ↓         ↓          ↓          ↓
+   [code]   [issues]   [optimized]  [tests]
+     └────────┴──────────┴──────────┘
+              ↓
+      SensorFusion consensus
+              ↓
+      Best code → pytest
+Files:
+examples/code_generation_v3_1.py — orchestrator
+output/generated_quicksort.py — winning code
+output/test_quicksort.py — auto-generated tests
+
 
 Supported LLM Adapters
 Table
