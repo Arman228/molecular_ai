@@ -5,7 +5,7 @@
 [![Tests](https://github.com/aknazev8941-web/molecular-ai/actions/workflows/tests.yml/badge.svg)](https://github.com/aknazev8941-web/molecular-ai/actions)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-green)]()
-[![Release](https://img.shields.io/badge/release-v0.2.0-orange)]()
+[![Release](https://img.shields.io/badge/release-v0.3.0-orange)]()
 
 Inspired by neural oscillations in the brain (gamma, beta, alpha, delta rhythms), Molecular AI coordinates agents through **resonance**, not message passing.
 
@@ -18,6 +18,7 @@ Inspired by neural oscillations in the brain (gamma, beta, alpha, delta rhythms)
 | **Scalability** | Tested up to 100 agents |
 | **Speed** | 2500+ steps/sec (3 agents, CPU) |
 | **Sensor Fusion** | 18.5–24.8% improvement vs IQR at 40% outlier load |
+| **Code Generation** | 6/6 pytest passed, multi-agent consensus |
 
 ## Architecture
 
@@ -47,7 +48,6 @@ pytest tests/ -v
 python main.py
 
 Examples
-bash
 # Brainstorm with 6 agents
 python examples/brainstorm.py
 
@@ -60,42 +60,39 @@ python examples/sensor_fusion_v8.py
 # Sensor fusion 5D + reputation (latest)
 python examples/sensor_fusion_multidim_reputation_v7.py
 
+# Multi-agent code generation (quicksort, 6/6 tests passed)
+python examples/code_generation_v3_1.py
+
 Sensor Fusion
 Multi-dimensional robust consensus with per-axis reputation and two-pass median filtering.
-
 Results v7 (SensorFusionLayer)
-Table
+
 Version	Method	Outlier Load	Best Improvement
 v2	Median + MAD	20% agents	0.06°C error
 v6	Two-Pass Median + Rep Filter	40% × 60% axes	24.8% (Humidity)
 v7	SensorFusionLayer (core module)	40% × 60% axes	24.8% (Humidity)
 
 Architecture
-plain
+
 Raw Sensors → Two-Pass Median Filter → Per-Axis Reputation → Median Consensus
      ↑___________________________________________↓
-Two-pass median: breakdown point ~50% outliers
+
+   Two-pass median: breakdown point ~50% outliers
 Per-axis reputation: min_rep=0.5, window=50 rounds
-Consensus: median (not weighted mean), resistant to residual outliers 
-
-
+Consensus: median (not weighted mean), resistant to residual outliers
 Files
-Table
-File	Description
+
+  File	Description
 core/sensor_fusion.py	Reusable SensorFusionLayer module
 examples/sensor_fusion_multidim_reputation_v7.py	5D demo with 20 agents
 tests/test_sensor_fusion.py
 
 Run
-bash
 pytest tests/test_sensor_fusion.py -v
-python examples/sensor_fusion_multidim_reputation_v7.py 
+python examples/sensor_fusion_multidim_reputation_v7.py
 
-## Multi-Agent Code Generation
-
+Multi-Agent Code Generation
 4 agents (Generator, Reviewer, Optimizer, Tester) generate code via orbital consensus.
-
-```bash
 python examples/code_generation_v3_1.py
 
 Results (Mock mode, no API key):
@@ -104,7 +101,6 @@ Generated: in-place quicksort with Lomuto partition
 Tests: 6/6 pytest passed + manual verification passed
 Sync r: 0.500
 Architecture:
-plain
 Generator → Reviewer → Optimizer → Tester
      ↓         ↓          ↓          ↓
    [code]   [issues]   [optimized]  [tests]
@@ -113,31 +109,29 @@ Generator → Reviewer → Optimizer → Tester
       SensorFusion consensus
               ↓
       Best code → pytest
-Files:
+
+      Files:
 examples/code_generation_v3_1.py — orchestrator
 output/generated_quicksort.py — winning code
 output/test_quicksort.py — auto-generated tests
 
-
 Supported LLM Adapters
-Table
 Provider	Models	Status
 OpenAI	GPT-4o, GPT-4o-mini	✅ Tested
 Anthropic	Claude 3.5 Sonnet, Haiku	✅ Tested
 Google	Gemini 1.5 Flash	⚠️ Adapter ready, keys not tested
 DeepSeek	DeepSeek API	⚠️ Adapter ready, keys not tested
 Ollama	Local LLM via HTTP	✅ Tested
-Mock	Offline testing	✅ Generates  meaningful choices 
+Mock	Offline testing	✅ Generates meaningful choices
 
 Scientific Foundation
 Kuramoto model — synchronization of coupled oscillators
 Hebbian plasticity — "neurons that fire together, wire together" (sparse k=4)
 Buzsaki's rhythms — hierarchical brain oscillations (4 levels)
 TD-learning — reward + value_weights + goal detection
-Emotional dynamics — mood, arousal, spin (excitatory 85%) 
+Emotional dynamics — mood, arousal, spin (excitatory 85%)
 
 Project Structure
-plain
 molecular_ai/
 ├── core/
 │   ├── sensor_fusion.py    # SensorFusionLayer (v0.2.0)
@@ -153,6 +147,7 @@ molecular_ai/
 ├── adapters/               # LLM adapters (OpenAI, Anthropic, Gemini, etc.)
 ├── examples/               # Demos and experiments
 ├── tests/                  # pytest suite (10+ tests)
+├── output/                 # Generated code artifacts
 └── .github/workflows/      # CI/CD (Python 3.10–3.13)
 
 Status
@@ -160,14 +155,13 @@ Status
 This is an experimental architecture exploring resonance-based multi-agent coordination. Production readiness requires GPU acceleration, distributed deployment, and further validation.
 
 Roadmap
-Table
-#	Topic	Priority
-1	GPU Acceleration (CUDA/Numba)	High
-2	Distributed Deployment (Redis/gRPC)	High
-3	Async LLM Integration	Medium
-4	Live LLM (Gemini/DeepSeek keys)	Medium
-5	Multi-Agent Code Generation	Medium
-6	Community Publication	Medium
+#	Topic	Priority	Status
+1	GPU Acceleration (CUDA/Numba)	High	Open
+2	Distributed Deployment (Redis/gRPC)	High	Open
+3	Async LLM Integration	Medium	Open
+4	Live LLM (Gemini/DeepSeek keys)	Medium	Open
+5	Multi-Agent Code Generation	Medium	v3.1 done, 6/6 tests
+6	Community Publication	Medium	Open
 
 License
 MIT — see LICENSE
