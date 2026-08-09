@@ -115,6 +115,39 @@ examples/code_generation_v3_1.py — orchestrator
 output/generated_quicksort.py — winning code
 output/test_quicksort.py — auto-generated tests
 
+## Dynamic Code Generation
+
+Auto-scaling agents by task complexity. User inputs task → analyzer detects modules → N agents → consensus → assembly.
+
+```bash
+python examples/dynamic_code_generation_v1.py "Flask REST API with JWT auth and React frontend"
+Results:
+Task: Flask REST API with JWT auth and React frontend
+Detected: 3 modules (backend, frontend, auth)
+Agents: 3 (auto-scaled)
+Sync r: 0.999
+Output: output/project/ with README.md + requirements.txt
+
+Scaling:
+Task	Modules	Agents
+quicksort	generic	1
+Flask API with JWT	backend, auth	2
+Flask + React + tests	backend, frontend, auth, tests	4
+Fullstack with Docker	backend, frontend, auth, db, tests, docs, config	7
+
+Architecture:
+User Task → Analyzer → [module1, module2, ...] → N agents
+                                              ↓
+                                    Orbital sync (r > 0.99)
+                                              ↓
+                              [Agent 1: backend] [Agent 2: frontend] [Agent 3: auth]
+                                              ↓
+                                    Project Assembly → output/project/
+
+   Files:
+examples/dynamic_code_generation_v1.py — orchestrator
+output/project/ — generated artifacts                                 
+
 Supported LLM Adapters
 Provider	Models	Status
 OpenAI	GPT-4o, GPT-4o-mini	✅ Tested
