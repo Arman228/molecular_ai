@@ -1,0 +1,4 @@
+flask
+PyJWT
+sqlalchemy
+react

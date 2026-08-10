@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Parse agency-agents README → skills.json for Molecular AI.
+Extracts 232 agents from markdown tables.
+"""
+
+import re
+import json
+import os
+
+
+def parse_readme(filepath: str) -> list:
+    """Parse README.md and extract all agents."""
+    with open(filepath, "r", encoding="utf-8") as f:
+        content = f.read()
+    
+    skills = []
+    current_division = "Unknown"
+    
+    # Pattern: | emoji [Name](path) | Specialty | When to Use |
+    # Or: | Agent | Specialty | When to Use |
+    table_pattern = re.compile(
+        r'\|\s*(?:\*\*)?([^|]+?)(?:\*\*)?\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|'
+    )
+    
+    # Division headers: ### 💻 Engineering Division
+    division_pattern = re.compile(r'###\s+.*?\s+(\w+(?:\s+\w+)*)\s+Division')
+    
+    lines = content.split('\n')
+    
+    for line in lines:
+        # Detect division
+        div_match = division_pattern.search(line)
+        if div_match:
+            current_division = div_match.group(1).strip()
+            continue
+        
+        # Parse table row
+        if '|' in line and '[' in line and '](' in line:
+            # Extract name and path from markdown link
+            link_match = re.search(r'\[(.*?)\]\((.*?)\)', line)
+            if link_match:
+                name = link_match.group(1).strip()
+                path = link_match.group(2).strip()
+                
+                # Extract category from path (engineering/...)
+                category = path.split('/')[0] if '/' in path else current_division.lower()
+                
+                # Extract emoji if present
+                emoji_match = re.search(r'([🎨🏗️📱🤖🚀🌐⚡💎🔧🚨⛓️📚💬👁️🗄️🌿🏛️🛡️🧬🔗🧱📧🎙️🖧🪡📜🕸️🛒🛍️🎯🔍🎭📖🌈📷✨🐦📱📸🤝🌏🎬🎵🔒🎠💼🎓🧠🔮🇨🇳🏗️🎧🗺️☁️🇫🇷🇰🇷⚕️🎯📝🔍📺📡✍️🔬🌱🏛️⚖️📋🗡️☁️🔍🎯🚨🛡️📋🛡️🌍🗣️🧠🗃️🔌📄⚙️📚🌱🏛️⚕️🎯🎓🔗🗺️☁️🇫🇷🇰🇷🏗️🎧🏥🏨🤝🌐⏱️📋⚖️🏦🏠🛒♟️🔄🧭🌟📝💰💼🌱🔐⚙️🤝⚔️🧠🎮🎨🔊📖🏗️✨🌐🛠️⚙️🎨🌐🗺️📜🎮🎯🗺️🎨🔊📖🧩⚙️🎯👗🧠🔧📦⚙️✅🤖🏗️🏔️📊🛸🌐🎨])', line)
+                emoji = emoji_match.group(1) if emoji_match else ""
+                
+                # Extract specialty (2nd column)
+                cols = [c.strip() for c in line.split('|')]
+                specialty = cols[2] if len(cols) > 2 else ""
+                when_to_use = cols[3] if len(cols) > 3 else ""
+                
+                skills.append({
+                    "name": f"{emoji} {name}".strip() if emoji else name,
+                    "category": category,
+                    "division": current_division,
+                    "specialty": specialty,
+                    "when_to_use": when_to_use,
+                    "source_file": path,
+                    "complexity": 5,  # default, can be adjusted
+                })
+    
+    return skills
+
+
+def main():
+    readme_path = os.path.join(os.path.dirname(__file__), "..", "data", "agency_readme.md")
+    output_path = os.path.join(os.path.dirname(__file__), "..", "data", "agency_skills.json")
+    
+    # Check if README exists
+    if not os.path.exists(readme_path):
+        print(f"[!] README not found at {readme_path}")
+        print("    Please copy agency-agents README.md to data/agency_readme.md")
+        return
+    
+    print(f"Parsing {readme_path}...")
+    skills = parse_readme(readme_path)
+    
+    print(f"Found {len(skills)} agents")
+    
+    # Save
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(skills, f, indent=2, ensure_ascii=False)
+    
+    print(f"Saved to {output_path}")
+    
+    # Stats
+    divisions = {}
+    categories = {}
+    for s in skills:
+        divisions[s["division"]] = divisions.get(s["division"], 0) + 1
+        categories[s["category"]] = categories.get(s["category"], 0) + 1
+    
+    print(f"\nDivisions ({len(divisions)}):")
+    for div, count in sorted(divisions.items(), key=lambda x: -x[1]):
+        print(f"  {div}: {count}")
+    
+    print(f"\nCategories ({len(categories)}):")
+    for cat, count in sorted(categories.items(), key=lambda x: -x[1]):
+        print(f"  {cat}: {count}")
+
+
+if __name__ == "__main__":
+    main()
