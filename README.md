@@ -146,7 +146,41 @@ User Task → Analyzer → [module1, module2, ...] → N agents
 
    Files:
 examples/dynamic_code_generation_v1.py — orchestrator
-output/project/ — generated artifacts                                 
+output/project/ — generated artifacts    
+
+## Async LLM + ConvergenceRegime
+
+### Async LLM Calls
+Parallel API calls via `asyncio.gather()` — 4× speedup vs sequential.
+
+```bash
+python examples/code_generation_v4_1.py
+
+Architecture:
+Agent 0 ─→ API ─┐
+Agent 1 ─→ API ─┼→ asyncio.gather() → all responses in 2 sec
+Agent 2 ─→ API ─┤
+Agent 3 ─→ API ─┘
+
+Files:
+adapters/async_base.py — AsyncLLMAdapter with semaphore-based rate limiting
+examples/code_generation_v4_1.py — async code generation, code-only winner
+
+ConvergenceRegime 
+Three regimes for controlled exploration vs exploitation:
+Table
+Regime	noise/dt	Sync r	Use case
+LINEAR	< 0.5	> 0.9	Stable consensus, code generation
+CRITICAL	≈ 1.0	~ 0.7-0.9	Brainstorm, exploration
+DIVERGENT	> 2.0	< 0.5	Emergency 
+python examples/brainstorm_regime.py
+
+Results:
+CRITICAL: sync r = 0.786 (diverse ideas)
+LINEAR: sync r = 0.769 (stable consensus)
+Files:
+core/convergence_regime.py — regime detection and switching
+examples/brainstorm_regime.py — demo with regime switching
 
 Supported LLM Adapters
 Provider	Models	Status
