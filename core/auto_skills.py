@@ -700,9 +700,18 @@ class AutoSkillEngine:
             "tensorflow", "pytorch", "llm", "embedding", "vector", "kafka", "queue",
         ]
         found = [kw for kw in tech_keywords if kw.lower() in task.lower()]
-        # If nothing found, treat every word as potential keyword
+        # If nothing found, extract words but filter out stop words
         if not found:
-            found = [w for w in re.findall(r"[A-Za-z]+", task) if len(w) > 3]
+            stop_words = {"this", "that", "with", "from", "into", "through", "during",
+                          "before", "after", "above", "below", "between", "under",
+                          "again", "further", "then", "once", "here", "there", "when",
+                          "where", "why", "how", "all", "each", "few", "more", "most",
+                          "other", "some", "such", "only", "own", "same", "than", "too",
+                          "very", "just", "also", "back", "being", "having", "does",
+                          "done", "down", "out", "off", "over", "under", "again",
+                          "further", "then", "once"}
+            words = re.findall(r"[A-Za-z]+", task.lower())
+            found = [w for w in words if len(w) > 3 and w not in stop_words]
         return found
 
 

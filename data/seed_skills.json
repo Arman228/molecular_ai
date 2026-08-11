@@ -1,0 +1,259 @@
+{
+  "version": "1.0",
+  "description": "Molecular AI Seed Skills — 20 unique capabilities for autonomous code reasoning and generation. Original taxonomy, not derived from external sources.",
+  "skills": [
+    {
+      "name": "PatternResonance",
+      "category": "Cognition",
+      "description": "Detects structural patterns across codebases by measuring phase-alignment similarity between abstract syntax trees. Identifies recurring motifs, anti-patterns, and architectural harmonies.",
+      "complexity": 8,
+      "code": "",
+      "tests": "",
+      "keywords": ["pattern", "ast", "resonance", "similarity", "structure"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "AbstractionDiffusion",
+      "category": "Architecture",
+      "description": "Propagates abstraction layers from high-level concepts to concrete implementations via gradient descent over code complexity. Reduces coupling by finding minimal sufficient interfaces.",
+      "complexity": 9,
+      "code": "",
+      "tests": "",
+      "keywords": ["abstraction", "layering", "interface", "decoupling", "diffusion"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "EdgeCaseTopology",
+      "category": "Verification",
+      "description": "Maps the topological boundary of valid input spaces. Generates boundary-value probes and corner-case trajectories that stress-test the convex hull of expected behavior.",
+      "complexity": 7,
+      "code": "",
+      "tests": "",
+      "keywords": ["edge case", "boundary", "topology", "test", "verification"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "RefactoringEntropy",
+      "category": "Maintenance",
+      "description": "Measures information-theoretic entropy of code modules to identify refactoring candidates. Prioritizes regions where local disorder exceeds global architectural coherence.",
+      "complexity": 6,
+      "code": "",
+      "tests": "",
+      "keywords": ["refactoring", "entropy", "complexity", "maintenance", "coherence"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "HypothesisMutation",
+      "category": "Testing",
+      "description": "Evolves test hypotheses through genetic operators: crossover of preconditions, mutation of assertions, and selection by fault-detection fitness. Generates tests that maximize code-path coverage.",
+      "complexity": 8,
+      "code": "",
+      "tests": "",
+      "keywords": ["hypothesis", "mutation", "testing", "genetic", "coverage"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "DependencyCoupling",
+      "category": "Architecture",
+      "description": "Constructs spectral graphs of module dependencies. Identifies tight coupling via eigenvector centrality and suggests decoupling strategies through minimum-cut partitioning.",
+      "complexity": 7,
+      "code": "",
+      "tests": "",
+      "keywords": ["dependency", "coupling", "graph", "spectral", "partitioning"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "StateOrbital",
+      "category": "Design",
+      "description": "Models system states as orbital phases in a Kuramoto network. Detects synchronization traps and designs state transitions that maintain phase coherence across distributed components.",
+      "complexity": 9,
+      "code": "",
+      "tests": "",
+      "keywords": ["state machine", "orbital", "phase", "synchronization", "transition"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "ErrorBackpropagation",
+      "category": "Debugging",
+      "description": "Traces error cascades backward through call graphs using gradient-like methods. Identifies root causes by minimizing the divergence between expected and actual execution paths.",
+      "complexity": 7,
+      "code": "",
+      "tests": "",
+      "keywords": ["error", "debugging", "backpropagation", "trace", "root cause"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "ContractResonance",
+      "category": "API",
+      "description": "Designs API contracts by finding resonant frequencies between consumer expectations and provider capabilities. Ensures impedance matching between service boundaries.",
+      "complexity": 6,
+      "code": "",
+      "tests": "",
+      "keywords": ["api", "contract", "resonance", "boundary", "impedance"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "DataFlowTopology",
+      "category": "Data",
+      "description": "Analyzes data flow as topological vector fields. Detects vortices (circular dependencies), sources (unbounded growth), and sinks (data loss) in pipeline architectures.",
+      "complexity": 7,
+      "code": "",
+      "tests": "",
+      "keywords": ["data flow", "topology", "pipeline", "vortex", "stream"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "ConcurrencyInterference",
+      "category": "Systems",
+      "description": "Models thread interactions as wave interference patterns. Detects constructive interference (deadlocks) and destructive interference (race conditions) through phase analysis.",
+      "complexity": 9,
+      "code": "",
+      "tests": "",
+      "keywords": ["concurrency", "thread", "interference", "deadlock", "race"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "TypeInferenceField",
+      "category": "Types",
+      "description": "Infers types by treating variables as particles in a potential field. Types emerge from gradient descent toward minimal-energy configurations that satisfy all constraints.",
+      "complexity": 8,
+      "code": "",
+      "tests": "",
+      "keywords": ["type", "inference", "field", "constraint", "gradient"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "MemoryPressureWave",
+      "category": "Performance",
+      "description": "Models memory allocation as pressure waves. Predicts garbage collection resonance frequencies and suggests object pooling to dampen oscillatory allocation patterns.",
+      "complexity": 7,
+      "code": "",
+      "tests": "",
+      "keywords": ["memory", "performance", "pressure", "gc", "allocation"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "AlgorithmicViscosity",
+      "category": "Algorithms",
+      "description": "Measures computational resistance of algorithms under load. Identifies viscosity bottlenecks where time complexity diverges from space complexity and suggests phase transitions.",
+      "complexity": 8,
+      "code": "",
+      "tests": "",
+      "keywords": ["algorithm", "complexity", "viscosity", "bottleneck", "big-o"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "RollbackAttractor",
+      "category": "Reliability",
+      "description": "Designs rollback strategies using attractor dynamics. Ensures that failed deployments converge to stable previous states without chaotic oscillation between versions.",
+      "complexity": 6,
+      "code": "",
+      "tests": "",
+      "keywords": ["rollback", "reliability", "attractor", "deployment", "stability"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "InterfaceSegregationField",
+      "category": "Architecture",
+      "description": "Segregates interfaces by clustering client usage patterns into electromagnetic-like field lines. Minimizes interface surface area while maximizing client satisfaction.",
+      "complexity": 7,
+      "code": "",
+      "tests": "",
+      "keywords": ["interface", "segregation", "isp", "client", "field"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "InvariantOscillator",
+      "category": "Verification",
+      "description": "Maintains system invariants through harmonic oscillation checks. Detects when invariants drift out of phase and applies corrective restoring forces.",
+      "complexity": 8,
+      "code": "",
+      "tests": "",
+      "keywords": ["invariant", "oscillator", "verification", "harmonic", "constraint"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "MockResonance",
+      "category": "Testing",
+      "description": "Generates mocks that resonate with real dependencies at the same frequency. Ensures test doubles exhibit phase-consistent behavior under all driving conditions.",
+      "complexity": 5,
+      "code": "",
+      "tests": "",
+      "keywords": ["mock", "test double", "resonance", "stub", "fake"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "DocumentationSynthesis",
+      "category": "Communication",
+      "description": "Synthesizes documentation from code entropy gradients. High-entropy regions get detailed explanations; low-entropy regions get concise summaries. Maintains narrative coherence.",
+      "complexity": 6,
+      "code": "",
+      "tests": "",
+      "keywords": ["documentation", "synthesis", "entropy", "narrative", "communication"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "SecurityBoundary",
+      "category": "Security",
+      "description": "Defines security perimeters as potential barriers with tunneling probabilities. Identifies where authentication/authorization fields are weakest and reinforces them.",
+      "complexity": 7,
+      "code": "",
+      "tests": "",
+      "keywords": ["security", "boundary", "auth", "perimeter", "tunneling"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "HebbianConsolidation",
+      "category": "Learning",
+      "description": "Strengthens frequently-used code paths (LTP) and weakens unused ones (LTD) during sleep cycles. Prunes dead code based on activation history and synaptic decay.",
+      "complexity": 9,
+      "code": "",
+      "tests": "",
+      "keywords": ["hebbian", "learning", "ltp", "ltd", "pruning", "consolidation"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "ConvergenceRegime",
+      "category": "Control",
+      "description": "Switches operational modes based on noise-to-coupling ratio: LINEAR for stable execution, CRITICAL for creative exploration, DIVERGENT for emergency reset and recovery.",
+      "complexity": 8,
+      "code": "",
+      "tests": "",
+      "keywords": ["convergence", "regime", "control", "noise", "coupling"],
+      "level": 0.5,
+      "seed": true
+    },
+    {
+      "name": "OrbitalConsensus",
+      "category": "Coordination",
+      "description": "Achieves distributed agreement through phase synchronization rather than leader election. Agents converge to collective decisions via Kuramoto coupling without central authority.",
+      "complexity": 9,
+      "code": "",
+      "tests": "",
+      "keywords": ["consensus", "orbital", "synchronization", "distributed", "kuramoto"],
+      "level": 0.5,
+      "seed": true
+    }
+  ]
+}
