@@ -154,7 +154,7 @@ class DeepSeekAdapter:
         self.rate_limiter = RateLimiter(max_requests=max_requests_per_min, window_sec=60.0)
         self.cost_tracker = CostTracker(max_cost_usd=max_cost_usd)
 
-        def _call_api(self, messages: List[Dict[str, str]], temperature: float = 0.2) -> Dict[str, Any]:
+    def _call_api(self, messages: List[Dict[str, str]], temperature: float = 0.2) -> Dict[str, Any]:
         """Raw API call with retry logic."""
         if not self.api_key:
             raise RuntimeError("DEEPSEEK_API_KEY not set. Get one at https://platform.deepseek.com")
@@ -290,7 +290,7 @@ Generate the JSON now."""
 
 def attach_deepseek_to_engine(engine, api_key: Optional[str] = None, **kwargs):
     """
-    Attach DeepSeek adapter to AutoSkillEngine.
+    Attach DeepSeek adapter to AutoSeekEngine.
     Sets engine.generator to use LLM mode with DeepSeek.
     """
     from core.auto_skills import SkillGenerator, SkillCandidate
@@ -298,29 +298,22 @@ def attach_deepseek_to_engine(engine, api_key: Optional[str] = None, **kwargs):
     adapter = DeepSeekAdapter(api_key=api_key, **kwargs)
     engine.generator = SkillGenerator(use_llm=True, adapter=adapter)
     engine.deepseek = adapter
+
+    def _deepseek_generate(self, gap: Dict[str, Any]) -> SkillCandidate:
+        """Replacement for SkillGenerator._generate_llm using DeepSeek."""
+        if self.adapter is None:
+            raise RuntimeError("No LLM adapter attached")
+        skill_data = self.adapter.generate_skill(gap)
+        return SkillCandidate(
+            name=skill_data["name"],
+            category=skill_data.get("category", "General"),
+            description=skill_data.get("description", ""),
+            complexity=skill_data.get("complexity", 5),
+            code=skill_data.get("code", "pass"),
+            tests=skill_data.get("tests", "def test_placeholder(): pass"),
+            keywords=skill_data.get("keywords", []),
+            parent_task=gap["task"],
+        )
+
+    SkillGenerator._generate_llm = _deepseek_generate
     return adapter
-
-
-# Monkey-patch SkillGenerator to support DeepSeek
-from core.auto_skills import SkillGenerator, SkillCandidate
-
-
-def _deepseek_generate(self, gap: Dict[str, Any]) -> SkillCandidate:
-    """Replacement for SkillGenerator._generate_llm using DeepSeek."""
-    if self.adapter is None:
-        raise RuntimeError("No LLM adapter attached")
-    skill_data = self.adapter.generate_skill(gap)
-    return SkillCandidate(
-        name=skill_data["name"],
-        category=skill_data.get("category", "General"),
-        description=skill_data.get("description", ""),
-        complexity=skill_data.get("complexity", 5),
-        code=skill_data.get("code", "pass"),
-        tests=skill_data.get("tests", "def test_placeholder(): pass"),
-        keywords=skill_data.get("keywords", []),
-        parent_task=gap["task"],
-    )
-
-
-# Patch the method
-SkillGenerator._generate_llm = _deepseek_generate
