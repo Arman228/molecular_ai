@@ -166,20 +166,23 @@ class DeepSeekAdapter:
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
+            "Content-Type": "application/json; charset=utf-8",
         }
         payload = {
             "model": self.model,
             "messages": messages,
             "temperature": temperature,
-            "max_tokens": 4096,
+            "max_tokens": 8192,
             "response_format": {"type": "json_object"},
         }
+
+        # Explicit UTF-8 serialization to fix Windows encoding bug
+        payload_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
 
         last_error = None
         for attempt in range(self.MAX_RETRIES):
             try:
-                resp = self.client.post(self.API_URL, headers=headers, json=payload)
+                resp = self.client.post(self.API_URL, headers=headers, content=payload_bytes)
                 resp.raise_for_status()
                 data = resp.json()
 
