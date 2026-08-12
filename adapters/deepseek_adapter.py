@@ -154,12 +154,12 @@ class DeepSeekAdapter:
         self.rate_limiter = RateLimiter(max_requests=max_requests_per_min, window_sec=60.0)
         self.cost_tracker = CostTracker(max_cost_usd=max_cost_usd)
 
-    def _call_api(self, messages: List[Dict[str, str]], temperature: float = 0.2) -> Dict[str, Any]:
+        def _call_api(self, messages: List[Dict[str, str]], temperature: float = 0.2) -> Dict[str, Any]:
         """Raw API call with retry logic."""
-        if not HAS_HTTPX:
-            raise RuntimeError("httpx not installed. Run: pip install httpx")
         if not self.api_key:
             raise RuntimeError("DEEPSEEK_API_KEY not set. Get one at https://platform.deepseek.com")
+        if not HAS_HTTPX:
+            raise RuntimeError("httpx not installed. Run: pip install httpx")
 
         self.cost_tracker.check()
         self.rate_limiter.acquire()
