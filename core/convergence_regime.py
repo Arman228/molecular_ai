@@ -36,6 +36,10 @@ def set_regime(system, regime: ConvergenceRegime):
         for layer in system.orbital.layers:
             layer.coupling *= 0.5
     
+    # FIX: propagate noise to all agents so regime change actually affects them
+    for agent in system.agents:
+        agent.noise = system.noise
+    
     return regime
 
 
