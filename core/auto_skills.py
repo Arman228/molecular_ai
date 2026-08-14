@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-AutoSkillEngine — autonomous skill generation
+AutoSkillEngine v2.0 — autonomous skill generation, validation, and evolution.
+Molecular AI creates its own skills: detect gap → generate → validate → vote → evolve.
 """
 
 from __future__ import annotations
@@ -16,7 +17,7 @@ import sys
 import tempfile
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 
 # ---------------------------------------------------------------------------
@@ -103,8 +104,34 @@ class SkillGapDetector:
             "task": task,
             "missing_keywords": uncovered,
             "severity": len(uncovered),
-            "suggested_category": "General",
+            "suggested_category": self._infer_category(uncovered),
         }
+
+    def _infer_category(self, keywords: List[str]) -> str:
+        """Heuristic category inference from keywords."""
+        mapping = {
+            "api": "Backend", "rest": "Backend", "graphql": "Backend",
+            "react": "Frontend", "vue": "Frontend", "css": "Frontend",
+            "jwt": "Security", "oauth": "Security", "encrypt": "Security",
+            "postgres": "Database", "mongo": "Database", "sql": "Database",
+            "docker": "DevOps", "k8s": "DevOps", "ci": "DevOps", "deploy": "DevOps",
+            "pytest": "Testing", "test": "Testing", "coverage": "Testing",
+            "pytorch": "AI/ML", "tensorflow": "AI/ML", "llm": "AI/ML",
+            "redis": "Infrastructure", "kafka": "Infrastructure", "queue": "Infrastructure",
+            "json": "Data", "parse": "Data", "file": "Data", "csv": "Data",
+            "websocket": "Real-time", "broadcast": "Real-time", "async": "Real-time",
+            "design": "UI/UX", "animation": "UI/UX", "grid": "UI/UX",
+            "auth": "Security", "logging": "DevOps", "monitoring": "DevOps",
+        }
+        scores: Dict[str, int] = {}
+        for kw in keywords:
+            kw_lower = kw.lower()
+            for mk, cat in mapping.items():
+                if mk in kw_lower:
+                    scores[cat] = scores.get(cat, 0) + 1
+        if scores:
+            return max(scores, key=scores.get)
+        return "General"
 
 
 # ---------------------------------------------------------------------------
@@ -113,26 +140,56 @@ class SkillGapDetector:
 
 class SkillGenerator:
     MOCK_TEMPLATES: Dict[str, Dict[str, str]] = {
+        "GraphQL": {
+            "category": "Backend",
+            "description": "GraphQL schema definition and resolver implementation.",
+            "complexity": "7",
+            "code": """
+class GraphQLSchema:
+    def __init__(self):
+        self.types = {}
+        self.resolvers = {}
+
+    def add_type(self, name, fields):
+        self.types[name] = fields
+
+    def add_resolver(self, type_name, field, resolver):
+        self.resolvers.setdefault(type_name, {})[field] = resolver
+
+    def resolve(self, type_name, field, root):
+        resolver = self.resolvers.get(type_name, {}).get(field)
+        return resolver(root) if resolver else root.get(field)
+""",
+            "tests": """
+def test_add_type():
+    s = GraphQLSchema()
+    s.add_type("User", {"id": "ID"})
+    assert "User" in s.types
+
+def test_resolver():
+    s = GraphQLSchema()
+    s.add_type("Query", {"hello": "String"})
+    s.add_resolver("Query", "hello", lambda _: "world")
+    assert s.resolve("Query", "hello", {}) == "world"
+""",
+            "keywords": ["graphql", "schema", "resolver"],
+        },
         "JSONParser": {
             "category": "Data",
-            "description": "JSON parsing and validation",
+            "description": "JSON parsing and validation.",
             "complexity": "4",
             "code": """
 import json
-from typing import Dict
 
 class JSONParser:
     @staticmethod
-    def parse(data: str) -> Dict:
+    def parse(data):
         try:
             return json.loads(data)
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON: {e}")
 """,
             "tests": """
-import pytest
-from auto_skill_json import JSONParser
-
 def test_parse_valid():
     data = '{"name": "test"}'
     result = JSONParser.parse(data)
@@ -140,34 +197,28 @@ def test_parse_valid():
 """,
             "keywords": ["json", "parse", "validation"],
         },
-        
         "FileProcessor": {
             "category": "Data",
-            "description": "File operations",
+            "description": "File operations.",
             "complexity": "4",
             "code": """
-import os
-
 class FileProcessor:
     @staticmethod
-    def read_file(path: str, encoding: str = "utf-8") -> str:
-        with open(path, 'r', encoding=encoding) as f:
+    def read_file(path):
+        with open(path, 'r') as f:
             return f.read()
-    
+
     @staticmethod
-    def write_file(path: str, content: str, encoding: str = "utf-8") -> None:
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, 'w', encoding=encoding) as f:
+    def write_file(path, content):
+        with open(path, 'w') as f:
             f.write(content)
 """,
             "tests": """
-import pytest
 import tempfile
 import os
-from auto_skill_file import FileProcessor
 
 def test_write_and_read():
-    with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
         path = f.name
     FileProcessor.write_file(path, "hello")
     result = FileProcessor.read_file(path)
@@ -175,226 +226,6 @@ def test_write_and_read():
     os.unlink(path)
 """,
             "keywords": ["file", "read", "write"],
-        },
-
-        "CSVProcessor": {
-            "category": "Data",
-            "description": "CSV reading and writing",
-            "complexity": "4",
-            "code": """
-import csv
-from typing import List, Dict
-
-class CSVProcessor:
-    @staticmethod
-    def read_csv(path: str) -> List[Dict[str, str]]:
-        with open(path, 'r', encoding='utf-8') as f:
-            return list(csv.DictReader(f))
-    
-    @staticmethod
-    def write_csv(path: str, data: List[Dict[str, str]]) -> None:
-        if not data:
-            return
-        with open(path, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=list(data[0].keys()))
-            writer.writeheader()
-            writer.writerows(data)
-""",
-            "tests": """
-import pytest
-import tempfile
-import os
-from auto_skill_csv import CSVProcessor
-
-def test_write_and_read():
-    with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-        path = f.name
-    data = [{"name": "Alice"}]
-    CSVProcessor.write_csv(path, data)
-    result = CSVProcessor.read_csv(path)
-    assert len(result) == 1
-    os.unlink(path)
-""",
-            "keywords": ["csv", "read", "write"],
-        },
-
-        "RedisCache": {
-            "category": "Infrastructure",
-            "description": "In-memory LRU cache",
-            "complexity": "5",
-            "code": """
-from collections import OrderedDict
-from typing import Any, Optional
-
-class RedisCache:
-    def __init__(self, capacity: int = 128):
-        self.capacity = capacity
-        self.store: OrderedDict[str, Any] = OrderedDict()
-
-    def set(self, key: str, value: Any) -> None:
-        if key in self.store:
-            self.store.move_to_end(key)
-        self.store[key] = value
-        while len(self.store) > self.capacity:
-            self.store.popitem(last=False)
-
-    def get(self, key: str) -> Any:
-        if key in self.store:
-            self.store.move_to_end(key)
-            return self.store[key]
-        return None
-""",
-            "tests": """
-import pytest
-from auto_skill_redis import RedisCache
-
-def test_set_get():
-    c = RedisCache()
-    c.set("a", 1)
-    assert c.get("a") == 1
-""",
-            "keywords": ["cache", "lru", "memory"],
-        },
-
-        "RateLimiter": {
-            "category": "Security",
-            "description": "Token-bucket rate limiter",
-            "complexity": "5",
-            "code": """
-import time
-from typing import Dict
-
-class RateLimiter:
-    def __init__(self, rate: float = 10.0, capacity: int = 20):
-        self.rate = rate
-        self.capacity = capacity
-        self.buckets: Dict[str, Dict] = {}
-
-    def _refill(self, client: str) -> None:
-        now = time.time()
-        bucket = self.buckets.setdefault(client, {"tokens": self.capacity, "last": now})
-        elapsed = now - bucket["last"]
-        bucket["tokens"] = min(self.capacity, bucket["tokens"] + elapsed * self.rate)
-        bucket["last"] = now
-
-    def allow(self, client: str) -> bool:
-        self._refill(client)
-        bucket = self.buckets[client]
-        if bucket["tokens"] >= 1:
-            bucket["tokens"] -= 1
-            return True
-        return False
-""",
-            "tests": """
-import pytest
-import time
-from auto_skill_ratelimit import RateLimiter
-
-def test_allow():
-    lim = RateLimiter(rate=10, capacity=5)
-    for _ in range(5):
-        assert lim.allow("alice") is True
-    assert lim.allow("alice") is False
-""",
-            "keywords": ["rate limit", "throttle"],
-        },
-
-        "WebSocket": {
-            "category": "Real-time",
-            "description": "WebSocket connection manager",
-            "complexity": "6",
-            "code": """
-import asyncio
-from typing import Set
-
-class WebSocketManager:
-    def __init__(self):
-        self.connections: Set[asyncio.Queue] = set()
-
-    async def connect(self) -> asyncio.Queue:
-        queue = asyncio.Queue()
-        self.connections.add(queue)
-        return queue
-
-    async def broadcast(self, message: str) -> None:
-        for q in self.connections:
-            try:
-                await q.put(message)
-            except Exception:
-                pass
-""",
-            "tests": """
-import pytest
-import asyncio
-from auto_skill_websocket import WebSocketManager
-
-@pytest.mark.asyncio
-async def test_connect():
-    mgr = WebSocketManager()
-    q = await mgr.connect()
-    assert q in mgr.connections
-""",
-            "keywords": ["websocket", "async", "broadcast"],
-        },
-
-        "DesignSystem": {
-            "category": "UI/UX",
-            "description": "Design system with tokens",
-            "complexity": "6",
-            "code": """
-from typing import Dict, Any
-
-class DesignSystem:
-    def __init__(self):
-        self.tokens = {
-            "colors": {
-                "primary": "#3b82f6",
-                "secondary": "#8b5cf6",
-            }
-        }
-    
-    def get_token(self, category: str, name: str) -> Any:
-        return self.tokens.get(category, {}).get(name)
-""",
-            "tests": """
-import pytest
-from auto_skill_design import DesignSystem
-
-def test_tokens():
-    ds = DesignSystem()
-    assert ds.get_token("colors", "primary") == "#3b82f6"
-""",
-            "keywords": ["design", "ui", "tokens"],
-        },
-
-        "ReactComponent": {
-            "category": "Frontend",
-            "description": "React-like component",
-            "complexity": "6",
-            "code": """
-from typing import Dict, Any
-
-class ReactComponent:
-    def __init__(self, props: Dict[str, Any] = None):
-        self.props = props or {}
-        self.state: Dict[str, Any] = {}
-    
-    def set_state(self, new_state: Dict[str, Any]) -> None:
-        self.state.update(new_state)
-    
-    def render(self) -> str:
-        return f"<div>{self.__class__.__name__}</div>"
-""",
-            "tests": """
-import pytest
-from auto_skill_react import ReactComponent
-
-def test_state():
-    comp = ReactComponent()
-    comp.set_state({"count": 1})
-    assert comp.state["count"] == 1
-""",
-            "keywords": ["react", "component", "state"],
         },
     }
 
@@ -627,12 +458,48 @@ class AutoSkillEngine:
             "pruned": 0,
         }
 
+    def _skill_exists(self, keywords: List[str]) -> bool:
+        """Check if a skill already exists in registry for given keywords."""
+        if not keywords:
+            return False
+        for kw in keywords:
+            kw_lower = kw.lower()
+            for skill_name, info in self.registry.skills.items():
+                if kw_lower in skill_name.lower():
+                    return True
+                for k in info.get("keywords", []):
+                    if kw_lower in k.lower():
+                        return True
+        return False
+
     def run_lifecycle(self, task: str, required_keywords: Optional[List[str]] = None) -> Optional[SkillCandidate]:
         if required_keywords is None:
             required_keywords = self._extract_keywords(task)
-        gap = self.detector.detect(task, required_keywords)
+
+        # Check if skill already exists in registry
+        if self._skill_exists(required_keywords):
+            return None
+
+        # If required keywords exist, try to generate from template
+        if required_keywords:
+            for kw in required_keywords:
+                for key in self.generator.MOCK_TEMPLATES.keys():
+                    if kw.lower() in key.lower():
+                        gap = {
+                            "task": task,
+                            "missing_keywords": required_keywords,
+                            "suggested_category": "General"
+                        }
+                        candidate = self.generator._generate_from_template(key, gap)
+                        if candidate:
+                            self.registry.integrate(candidate, accepted=True)
+                            self.stats["accepted"] += 1
+                            return candidate
+
+        gap = self.detector.detect(task, required_keywords or [])
         if gap is None:
             return None
+
         self.stats["gaps_detected"] += 1
         candidate = self.generator.generate(gap)
         self.stats["generated"] += 1
@@ -644,26 +511,25 @@ class AutoSkillEngine:
             self.stats["accepted"] += 1
         return candidate if accepted else None
 
+    def evolve_from_feedback(self, skill_name: str, success: bool):
+        """External feedback loop: task succeeded/failed using this skill."""
+        self.registry.record_usage(skill_name, success)
+
     def sleep(self) -> List[str]:
         pruned = self.registry.sleep_consolidation()
         self.stats["pruned"] += len(pruned)
         return pruned
 
     def _extract_keywords(self, task: str) -> List[str]:
-        tech_keywords = ["json", "file", "csv", "cache", "rate", "websocket", "design", "react"]
+        tech_keywords = [
+            "graphql", "json", "file", "parse", "docker", "deploy",
+            "api", "rest", "react", "vue", "css", "html",
+            "jwt", "oauth", "postgres", "mongo", "sql",
+            "redis", "cache", "websocket", "async", "design"
+        ]
         found = [kw for kw in tech_keywords if kw.lower() in task.lower()]
         if not found:
             words = re.findall(r"[A-Za-z]+", task.lower())
             stop_words = {"this", "that", "with", "from"}
             found = [w for w in words if len(w) > 3 and w not in stop_words]
         return found[:10]
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def attach_to_system(system, use_llm: bool = False, adapter=None) -> AutoSkillEngine:
-    engine = AutoSkillEngine(use_llm=use_llm, adapter=adapter)
-    system.auto_skill = engine
-    return engine
