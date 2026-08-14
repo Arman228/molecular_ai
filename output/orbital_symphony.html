@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Orbital Symphony · Synchronization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            background: #0b0b1e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            touch-action: none;
+        }
+        .game-wrapper {
+            background: #0f0f24;
+            border-radius: 28px;
+            padding: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 0 0 0 2px #2a2a4a inset;
+            max-width: 900px;
+            width: fit-content;
+            margin: 16px;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 20px;
+            background: radial-gradient(circle at 30% 30%, #0f1028, #060614);
+            box-shadow: 0 0 50px #3b2a5e88;
+            touch-action: none;
+            cursor: grab;
+        }
+        .ui-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 14px;
+            padding: 10px 20px;
+            background: #1c1c32;
+            border-radius: 50px;
+            border: 1px solid #4b3b7a;
+            color: #cfd6ff;
+            font-size: 1rem;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .score-group {
+            display: flex;
+            gap: 22px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        .score-label {
+            color: #96a0d8;
+        }
+        #syncScore {
+            color: #b9ffb0;
+            text-shadow: 0 0 12px #7dff88;
+            font-weight: 700;
+            min-width: 70px;
+        }
+        .level-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .lvl-btn {
+            background: #262647;
+            border: none;
+            color: #c0c6ff;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 4px #00000055;
+            transition: 0.2s;
+            border: 1px solid #3f3f74;
+            letter-spacing: 0.3px;
+        }
+        .lvl-btn.active {
+            background: #5a4a9f;
+            color: white;
+            box-shadow: 0 0 20px #7b6ad2;
+            border-color: #b7aaff;
+        }
+        .mode-toggle {
+            display: flex;
+            gap: 6px;
+        }
+        .mode-btn {
+            background: #1e1e3e;
+            border: 1px solid #3d3d6e;
+            color: #c4c9ff;
+            padding: 6px 12px;
+            border-radius: 32px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .mode-btn.active {
+            background: #32506e;
+            color: white;
+            border-color: #88bbee;
+            box-shadow: 0 0 12px #4a7ea8;
+        }
+        .timer-div {
+            background: #191932;
+            padding: 4px 16px;
+            border-radius: 40px;
+            border: 1px solid #4d4d8c;
+            font-weight: 600;
+        }
+        .instructions {
+            margin-top: 12px;
+            font-size: 0.8rem;
+            color: #777aad;
+            padding: 0 8px;
+            text-align: center;
+            letter-spacing: 0.3px;
+        }
+        .key-hint {
+            color: #b7a7ff;
+        }
+        footer {
+            margin-top: 8px;
+            color: #4a4a80;
+            text-align: center;
+            font-size: 0.7rem;
+        }
+        @media (max-width: 600px) {
+            .ui-panel { flex-direction: column; align-items: stretch; }
+            .score-group { justify-content: space-around; }
+        }
+    </style>
+</head>
+<body>
+<div class="game-wrapper">
+    <canvas id="symphonyCanvas" width="800" height="800"></canvas>
+    <div class="ui-panel">
+        <div class="score-group">
+            <span>🎵 <span class="score-label">SYNC</span> <span id="syncScore">0%</span></span>
+            <span class="score-label">⏱️ <span id="timerDisplay">0s</span></span>
+        </div>
+        <div class="level-buttons">
+            <button class="lvl-btn" data-level="0">🌱 3</button>
+            <button class="lvl-btn" data-level="1">🌿 5</button>
+            <button class="lvl-btn active" data-level="2">🌳 7</button>
+        </div>
+        <div class="mode-toggle">
+            <button class="mode-btn active" data-mode="linear">LIN</button>
+            <button class="mode-btn" data-mode="critical">CRIT</button>
+            <button class="mode-btn" data-mode="divergent">DIV</button>
+        </div>
+    </div>
+    <div class="instructions">
+        <span>🪐 drag particle: <span class="key-hint">←/→ radius</span> · <span class="key-hint">↑/↓ speed</span> — double-click reset · space pause</span>
+    </div>
+    <footer>⚡ harmonic consensus engine ⚡</footer>
+</div>
+
+<script>
+    (function() {
+        const canvas = document.getElementById('symphonyCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreSpan = document.getElementById('syncScore');
+        const timerSpan = document.getElementById('timerDisplay');
+
+        // ---- GLOBAL STATE ----
+        let W = 800, H = 800;
+        const CENTER_X = 400, CENTER_Y = 400;
+        const BASE_RADIUS = 120;
+        const MAX_RADIUS = 340;
+        const MIN_RADIUS = 60;
+
+        // particles array (dynamic per level)
+        let particles = [];
+        let particlesCount = 7; // default
+
+        // level config
+        const levelConfig = [
+            { count: 3, baseSpeed: 0.0035, speedVar: 0.003 },
+            { count: 5, baseSpeed: 0.004, speedVar: 0.004 },
+            { count: 7, baseSpeed: 0.004, speedVar: 0.005 }
+        ];
+
+        // regime/mode
+        let regime = 'linear'; // 'linear', 'critical', 'divergent'
+        // dynamic factor for speed adjustment
+        let regimeFactor = 1.2; // linear stability
+
+        // game state
+        let score = 0; // 0-100
+        let paused = false;
+        let startTime = Date.now();
+        let elapsed = 0;
+        let globalPhase = 0;
+
+        // interaction
+        let dragging = null; // particle index
+        let dragStart = { x: 0, y: 0, radius: 0, speed: 0, angle: 0 };
+        let mousePos = { x: 0, y: 0 };
+        let lastTap = 0;
+
+        // audio (synthesized)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let audioEnabled = true;
+
+        // ----- helper functions for notes (pentatonic / major) -----
+        function getFrequencyFromRadius(radius) {
+            // map radius to pitch (scaled)
+            const norm = (radius - MIN_RADIUS) / (MAX_RADIUS - MIN_RADIUS);
+            const base = 220; // A3
+            return base * Math.pow(2, norm * 1.6); // range up to ~660Hz
+        }
+
+        function playNote(particle, intensity = 0.3) {
+            if (!audioEnabled || !audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const freq = particle.noteFreq || getFrequencyFromRadius(particle.radius);
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            gain.gain.value = intensity * 0.25;
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+            osc.connect(gain).connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+        }
+
+        // create particles for a level
+        function createParticles(count) {
+            particles = [];
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = BASE_RADIUS + Math.random() * 170;
+                const speed = 0.004 + Math.random() * 0.006;
+                particles.push({
+                    angle: angle,
+                    radius: radius,
+                    speed: speed,
+                    phase_offset: Math.random() * 2 * Math.PI,
+                    baseSpeed: speed,
+                    // trails
+                    trail: [],
+                    // meta
+                    noteFreq: 220 + Math.random() * 400,
+                    glow: 0,
+                    outOfSync: 0,
+                });
+            }
+        }
+
+        // ----- sync detection & score -----
+        function computeSyncScore() {
+            if (particles.length < 2) return 0;
+            // compare phases (after adjustment)
+            let sumDelta = 0;
+            const n = particles.length;
+            for (let i = 0; i < n; i++) {
+                for (let j = i+1; j < n; j++) {
+                    let delta = Math.abs(particles[i].angle - particles[j].angle);
+                    if (delta > Math.PI) delta = 2*Math.PI - delta;
+                    sumDelta += delta;
+                }
+            }
+            const pairs = n*(n-1)/2;
+            const avgDelta = sumDelta / pairs;
+            // normalize: max avg delta = PI, so score = 1 - (avgDelta / PI)
+            return Math.max(0, 1 - avgDelta / Math.PI) * 100;
+        }
+
+        function updateSyncVisuals() {
+            const n = particles.length;
+            for (let p of particles) {
+                let maxDelta = 0;
+                for (let q of particles) {
+                    if (p === q) continue;
+                    let d = Math.abs(p.angle - q.angle);
+                    if (d > Math.PI) d = 2*Math.PI - d;
+                    if (d > maxDelta) maxDelta = d;
+                }
+                // glow from 0 to 1
+                p.glow = Math.max(0, 1 - (maxDelta / 1.6));
+                p.outOfSync = maxDelta > 0.7 ? 1 : (maxDelta > 0.4 ? 0.4 : 0);
+            }
+        }
+
+        // ------ update mechanics with regime ------
+        function updateParticles(dt = 1) {
+            for (let p of particles) {
+                // regime dependent speed stability
+                let speedFactor = 1.0;
+                if (regime === 'critical') {
+                    speedFactor = 0.9 + 0.3 * Math.sin(p.angle * 0.9 + p.phase_offset);
+                } else if (regime === 'divergent') {
+                    speedFactor = 1.0 + 0.7 * Math.cos(p.phase_offset * 1.3 + elapsed * 0.01);
+                }
+                p.speed = Math.min(0.02, Math.max(0.001, p.baseSpeed * speedFactor));
+                // adjust phase
+                p.angle += p.speed * dt * 0.02;
+                if (p.angle >= 2*Math.PI) p.angle -= 2*Math.PI;
+                // trail update (20 frames)
+                p.trail.push({ x: CENTER_X + p.radius * Math.cos(p.angle), y: CENTER_Y + p.radius * Math.sin(p.angle), angle: p.angle });
+                if (p.trail.length > 20) p.trail.shift();
+            }
+            // compute score & glow
+            const syncScore = computeSyncScore();
+            score = syncScore;
+            // if full sync -> celebration wave
+            if (syncScore > 92) {
+                // trigger chord
+                if (Math.floor(Date.now()/300) % 2 === 0) {
+                    // play full chord occasionally
+                    if (Math.random() > 0.8) {
+                        playChord();
+                    }
+                }
+            }
+            updateSyncVisuals();
+        }
+
+        function playChord() {
+            // chord based on current particles (major/minor)
+            if (!audioCtx) return;
+            particles.forEach((p,i) => {
+                setTimeout(() => playNote(p, 0.2), i*30);
+            });
+        }
+
+        // ------ drawing -------
+        function drawBackground() {
+            // nebula glow
+            const grad = ctx.createRadialGradient(400, 350, 50, 400, 400, 500);
+            grad.addColorStop(0, '#2b174b');
+            grad.addColorStop(0.4, '#131033');
+            grad.addColorStop(1, '#04041a');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+            // stars
+            for (let i=0;i<80;i++) {
+                let x = (i*37)%W, y = (i*73)%H;
+                ctx.fillStyle = `rgba(255,255,255,${0.3+Math.sin(i+elapsed*0.01)*0.1})`;
+                ctx.beginPath();
+                ctx.arc(x, y, 1.2, 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+
+        function drawParticles() {
+            for (let i=0; i<particles.length; i++) {
+                const p = particles[i];
+                const x = CENTER_X + p.radius * Math.cos(p.angle);
+                const y = CENTER_Y + p.radius * Math.sin(p.angle);
+                // trails
+                for (let t of p.trail) {
+                    ctx.fillStyle = `rgba(120, 160, 255, ${0.08})`;
+                    ctx.beginPath();
+                    ctx.arc(t.x, t.y, 4, 0, Math.PI*2);
+                    ctx.fill();
+                }
+                // glow & color
+                const r = 20 + 20 * p.glow;
+                const color = `hsl(${220 + p.glow*60}, 80%, ${65 + p.glow*20}%)`;
+                ctx.shadowBlur = 25 * p.glow + 10;
+                ctx.shadowColor = `rgba(200, 120, 255, ${0.6})`;
+                // main particle
+                ctx.beginPath();
+                ctx.arc(x, y, 7 + 4 * p.glow, 0, Math.PI*2);
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                // out of sync ring (resonance detection)
+                if (p.outOfSync > 0.3) {
+                    ctx.strokeStyle = `rgba(255, 80, 120, ${p.outOfSync*0.6})`;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 12 + 5*Math.sin(elapsed*0.1), 0, Math.PI*2);
+                    ctx.stroke();
+                }
+                // inner core
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(x, y, 3, 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+
+        function drawOrbits() {
+            ctx.strokeStyle = 'rgba(120, 140, 255, 0.18)';
+            ctx.lineWidth = 1.2;
+            for (let p of particles) {
+                ctx.beginPath();
+                ctx.arc(CENTER_X, CENTER_Y, p.radius, 0, Math.PI*2);
+                ctx.stroke();
+            }
+            // center core
+            ctx.fillStyle = '#ffddaa';
+            ctx.shadowBlur = 40;
+            ctx.shadowColor = '#ffb366';
+            ctx.beginPath();
+            ctx.arc(CENTER_X, CENTER_Y, 15, 0, Math.PI*2);
+            ctx.fillStyle = '#f4c988';
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        // ----- interaction -----
+        function getParticleAt(x, y) {
+            for (let i=0; i<particles.length; i++) {
+                const p = particles[i];
+                const dx = CENTER_X + p.radius*Math.cos(p.angle) - x;
+                const dy = CENTER_Y + p.radius*Math.sin(p.angle) - y;
+                if (dx*dx + dy*dy < 400) return i;
+            }
+            return -1;
+        }
+
+        function handleDragMove() {
+            if (dragging !== null && dragging < particles.length) {
+                const p = particles[dragging];
+                const dx = mousePos.x - CENTER_X;
+                const dy = mousePos.y - CENTER_Y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                // radius change (horizontal drag)
+                const radiusDelta = (mousePos.x - dragStart.x) * 0.5;
+                let newRadius = dragStart.radius + radiusDelta;
+                newRadius = Math.min(MAX_RADIUS, Math.max(MIN_RADIUS, newRadius));
+                p.radius = newRadius;
+                // speed change (vertical drag)
+                const speedDelta = (mousePos.y - dragStart.y) * 0.002;
+                let newSpeed = dragStart.speed + speedDelta;
+                newSpeed = Math.min(0.02, Math.max(0.002, newSpeed));
+                p.speed = newSpeed;
+                p.baseSpeed = newSpeed;
+                // update freq
+                p.noteFreq = getFrequencyFromRadius(p.radius);
+            }
+        }
+
+        // ----- level & mode -----
+        function setLevel(index) {
+            const cfg = levelConfig[index];
+            createParticles(cfg.count);
+            particlesCount = cfg.count;
+            // update buttons
+            document.querySelectorAll('.lvl-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === index);
+            });
+            // reset timer
+            startTime = Date.now();
+        }
+
+        function setRegime(mode) {
+            regime = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+        }
+
+        // ----- event listeners -----
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+            const idx = getParticleAt(x, y);
+            if (idx !== -1) {
+                dragging = idx;
+                const p = particles[idx];
+                dragStart = { x, y, radius: p.radius, speed: p.speed, angle: p.angle };
+                mousePos = { x, y };
+                canvas.style.cursor = 'grabbing';
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            mousePos = { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+            if (dragging !== null) {
+                handleDragMove();
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            if (dragging !== null) {
+                playingNoteOnDrag();
+                dragging = null;
+                canvas.style.cursor = 'grab';
+            }
+        });
+
+        function playingNoteOnDrag() {
+            if (dragging !== null && particles[dragging]) {
+                playNote(particles[dragging], 0.5);
+            }
+        }
+
+        // touch events
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', { clientX: touch.clientX, clientY: touch.clientY });
+            canvas.dispatchEvent(mouseEvent);
+        }, {passive: false});
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', { clientX: touch.clientX, clientY: touch.clientY });
+            canvas.dispatchEvent(mouseEvent);
+        }, {passive: false});
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            canvas.dispatchEvent(new MouseEvent('mouseup'));
+        }, {passive: false});
+
+        // double click reset
+        canvas.addEventListener('dblclick', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) * canvas.width / rect.width;
+            const y = (e.clientY - rect.top) * canvas.height / rect.height;
+            const idx = getParticleAt(x, y);
+            if (idx !== -1) {
+                const p = particles[idx];
+                p.angle = Math.random()*Math.PI*2;
+                p.radius = BASE_RADIUS + Math.random()*160;
+                p.speed = 0.004 + Math.random()*0.006;
+                p.baseSpeed = p.speed;
+                p.noteFreq = getFrequencyFromRadius(p.radius);
+            }
+        });
+
+        // keyboard 
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                paused = !paused;
+            }
+        });
+
+        // ui buttons
+        document.querySelectorAll('.lvl-btn').forEach((btn, idx) => {
+            btn.addEventListener('click', () => { setLevel(idx); });
+        });
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => setRegime(btn.dataset.mode));
+        });
+
+        // initial
+        setLevel(2); // 7 particles
+        setRegime('linear');
+
+        // resize handling (keep consistent)
+        function resize() {
+            const container = canvas.parentElement;
+            const width = container.clientWidth;
+            const height = width * 0.8;
+            if (width < 500) {
+                canvas.width = 600;
+                canvas.height = 600;
+                W=600; H=600;
+            } else {
+                canvas.width = 800;
+                canvas.height = 800;
+                W=800; H=800;
+            }
+            // re-position center (fixed)
+        }
+        // keep fixed size
+        canvas.width = 800;
+        canvas.height = 800;
+        W=800; H=800;
+
+        // ----- main loop -----
+        function loop() {
+            if (!paused) {
+                elapsed = (Date.now() - startTime) / 1000;
+                timerSpan.textContent = Math.floor(elapsed) + 's';
+                updateParticles(1);
+                // compute score display
+                scoreSpan.textContent = Math.round(score) + '%';
+            }
+
+            // draw
+            ctx.clearRect(0, 0, W, H);
+            drawBackground();
+            drawOrbits();
+            drawParticles();
+
+            // UI overlay: sync wave if score>90
+            if (score > 90) {
+                ctx.fillStyle = `rgba(255, 230, 200, ${0.08 + Math.sin(elapsed*5)*0.02})`;
+                ctx.fillRect(0, 0, W, H);
+                ctx.font = 'bold 24px sans-serif';
+                ctx.fillStyle = '#fff2ce';
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#ffddaa';
+                ctx.fillText('◈ SYNC WAVE ◈', W/2-120, 70);
+                ctx.shadowBlur = 0;
+            }
+
+            requestAnimationFrame(loop);
+        }
+
+        // auto play initial note
+        addEventListener('click', function unlockAudio() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }, {once: true});
+
+        loop();
+    })();
+</script>
+</body>
+</html>

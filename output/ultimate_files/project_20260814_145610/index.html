@@ -1,0 +1,1103 @@
+
+## Структура проекта
+
+sandbox_game/
+├── index.html
+├── css/
+│   └── style.css
+├── js/
+│   ├── main.js
+│   ├── world.js
+│   ├── player.js
+│   ├── buildings.js
+│   ├── resources.js
+│   ├── combat.js
+│   ├── diplomacy.js
+│   ├── technology.js
+│   └── npc.js
+└── assets/
+    └── (папка для будущих ассетов)
+
+## index.html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Песочница Evolution</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui-panel">
+            <div id="resources-panel">
+                <h3>Ресурсы</h3>
+                <div id="wood-count">Дерево: 0</div>
+                <div id="stone-count">Камень: 0</div>
+                <div id="food-count">Еда: 0</div>
+                <div id="gold-count">Золото: 0</div>
+            </div>
+            <div id="building-panel">
+                <h3>Постройки</h3>
+                <button onclick="game.buildBuilding('house')">Дом (10 дер, 5 кам)</button>
+                <button onclick="game.buildBuilding('farm')">Ферма (15 дер, 10 кам)</button>
+                <button onclick="game.buildBuilding('barracks')">Казармы (20 дер, 15 кам)</button>
+                <button onclick="game.buildBuilding('tech_lab')">Лаборатория (30 дер, 20 кам)</button>
+            </div>
+            <div id="tech-panel">
+                <h3>Технологии</h3>
+                <button onclick="game.researchTech('basic')">Базовая (50 дер, 30 зол)</button>
+                <button onclick="game.researchTech('military')">Военная (100 дер, 50 зол)</button>
+                <button onclick="game.researchTech('economy')">Экономика (80 дер, 40 зол)</button>
+            </div>
+            <div id="diplomacy-panel">
+                <h3>Дипломатия</h3>
+                <button onclick="game.initiateDiplomacy('trade')">Торговля</button>
+                <button onclick="game.initiateDiplomacy('alliance')">Альянс</button>
+                <button onclick="game.initiateDiplomacy('war')">Война</button>
+            </div>
+            <div id="combat-panel">
+                <h3>Управление</h3>
+                <button onclick="game.toggleCombatMode()">Боевой режим</button>
+                <button onclick="game.spawnUnit('warrior')">Создать воина (20 дер, 10 зол)</button>
+                <button onclick="game.spawnUnit('worker')">Создать рабочего (10 дер, 5 зол)</button>
+            </div>
+        </div>
+    </div>
+    <script src="js/main.js"></script>
+    <script src="js/world.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/buildings.js"></script>
+    <script src="js/resources.js"></script>
+    <script src="js/combat.js"></script>
+    <script src="js/diplomacy.js"></script>
+    <script src="js/technology.js"></script>
+    <script src="js/npc.js"></script>
+</body>
+</html>
+
+## css/style.css
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #1a1a2e;
+    color: white;
+    overflow: hidden;
+}
+
+#game-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+#gameCanvas {
+    flex: 1;
+    background: #2d5a27;
+    border-right: 2px solid #444;
+}
+
+#ui-panel {
+    width: 300px;
+    padding: 20px;
+    background: #16213e;
+    overflow-y: auto;
+}
+
+#ui-panel h3 {
+    color: #e94560;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #e94560;
+    padding-bottom: 5px;
+}
+
+#ui-panel div {
+    margin-bottom: 8px;
+}
+
+#ui-panel button {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    background: #0f3460;
+    color: white;
+    border: 1px solid #e94560;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+#ui-panel button:hover {
+    background: #e94560;
+    transform: translateY(-2px);
+}
+
+#resources-panel div {
+    padding: 5px;
+    background: #0f3460;
+    border-radius: 3px;
+    margin: 3px 0;
+}
+
+#combat-panel {
+    background: #1a1a2e;
+    border: 1px solid #e94560;
+    padding: 10px !important;
+    border-radius: 5px;
+}
+
+#combat-panel button {
+    background: #c0392b;
+}
+
+#combat-panel button:hover {
+    background: #e74c3c;
+}
+
+## js/main.js
+/**
+ * Главный класс игры
+ */
+class Game {
+    constructor() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        
+        // Инициализация систем
+        this.world = new World();
+        this.player = new Player();
+        this.buildings = new Buildings();
+        this.resources = new Resources();
+        this.combat = new Combat();
+        this.diplomacy = new Diplomacy();
+        this.techTree = new Technology();
+        this.npcManager = new NPCManager();
+        
+        // Основные параметры
+        this.camera = { x: 0, y: 0, zoom: 1 };
+        this.selectedBuilding = null;
+        this.isBuilding = false;
+        this.isCombatMode = false;
+        this.running = true;
+        
+        this.init();
+    }
+    
+    init() {
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.setupControls();
+        this.gameLoop();
+    }
+    
+    resize() {
+        const container = document.getElementById('game-container');
+        this.canvas.width = container.clientWidth - 300;
+        this.canvas.height = container.clientHeight;
+    }
+    
+    setupControls() {
+        // Управление камерой
+        document.addEventListener('keydown', (e) => {
+            const speed = 10;
+            switch(e.key) {
+                case 'w': this.camera.y -= speed; break;
+                case 's': this.camera.y += speed; break;
+                case 'a': this.camera.x -= speed; break;
+                case 'd': this.camera.x += speed; break;
+                case '=': this.camera.zoom *= 1.1; break;
+                case '-': this.camera.zoom /= 1.1; break;
+                case 'Escape': this.selectedBuilding = null; this.isBuilding = false; break;
+            }
+        });
+        
+        // Клик по миру
+        this.canvas.addEventListener('click', (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            const worldX = (mouseX / this.camera.zoom) + this.camera.x;
+            const worldY = (mouseY / this.camera.zoom) + this.camera.y;
+            
+            this.handleClick(worldX, worldY);
+        });
+    }
+    
+    handleClick(x, y) {
+        if (this.isBuilding && this.selectedBuilding) {
+            this.buildings.placeBuilding(this.selectedBuilding, x, y);
+            this.isBuilding = false;
+            this.selectedBuilding = null;
+        } else if (this.isCombatMode) {
+            this.combat.attackAt(x, y);
+        } else {
+            this.selectedBuilding = this.buildings.getBuildingAt(x, y);
+        }
+    }
+    
+    buildBuilding(type) {
+        const cost = this.buildings.getCost(type);
+        if (this.resources.hasEnough(cost)) {
+            this.resources.spend(cost);
+            this.selectedBuilding = type;
+            this.isBuilding = true;
+        } else {
+            alert('Недостаточно ресурсов!');
+        }
+    }
+    
+    researchTech(tech) {
+        const cost = this.techTree.getTechCost(tech);
+        if (this.resources.hasEnough(cost)) {
+            this.resources.spend(cost);
+            this.techTree.research(tech);
+        } else {
+            alert('Недостаточно ресурсов для исследования!');
+        }
+    }
+    
+    initiateDiplomacy(action) {
+        this.diplomacy.initiate(action);
+    }
+    
+    toggleCombatMode() {
+        this.isCombatMode = !this.isCombatMode;
+        alert(this.isCombatMode ? 'Боевой режим активирован' : 'Боевой режим отключен');
+    }
+    
+    spawnUnit(type) {
+        const cost = this.combat.getUnitCost(type);
+        if (this.resources.hasEnough(cost)) {
+            this.resources.spend(cost);
+            this.combat.spawnUnit(type);
+        } else {
+            alert('Недостаточно ресурсов!');
+        }
+    }
+    
+    gameLoop() {
+        if (!this.running) return;
+        
+        this.update();
+        this.render();
+        
+        requestAnimationFrame(() => this.gameLoop());
+    }
+    
+    update() {
+        this.world.update();
+        this.player.update();
+        this.buildings.update();
+        this.resources.update();
+        this.combat.update();
+        this.npcManager.update();
+        this.techTree.update();
+        
+        // Обновление UI
+        this.updateUI();
+    }
+    
+    render() {
+        const ctx = this.ctx;
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        ctx.save();
+        ctx.scale(this.camera.zoom, this.camera.zoom);
+        ctx.translate(-this.camera.x, -this.camera.y);
+        
+        // Рисуем мир
+        this.world.render(ctx);
+        this.buildings.render(ctx);
+        this.combat.renderUnits(ctx);
+        this.npcManager.render(ctx);
+        
+        // Рисуем призрак здания
+        if (this.isBuilding && this.selectedBuilding) {
+            this.drawGhostBuilding(ctx);
+        }
+        
+        ctx.restore();
+        
+        // UI поверх
+        this.renderUI();
+    }
+    
+    drawGhostBuilding(ctx) {
+        ctx.globalAlpha = 0.5;
+        const building = this.buildings.getBuildingType(this.selectedBuilding);
+        ctx.fillStyle = building.color;
+        ctx.fillRect(
+            (this.camera.x + 200 / this.camera.zoom) - building.size / 2,
+            (this.camera.y + 200 / this.camera.zoom) - building.size / 2,
+            building.size,
+            building.size
+        );
+        ctx.globalAlpha = 1;
+    }
+    
+    updateUI() {
+        document.getElementById('wood-count').textContent = `Дерево: ${this.resources.wood}`;
+        document.getElementById('stone-count').textContent = `Камень: ${this.resources.stone}`;
+        document.getElementById('food-count').textContent = `Еда: ${this.resources.food}`;
+        document.getElementById('gold-count').textContent = `Золото: ${this.resources.gold}`;
+    }
+    
+    renderUI() {
+        // Дополнительный UI рендер
+        const ctx = this.ctx;
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(10, 10, 200, 30);
+        ctx.fillStyle = 'white';
+        ctx.fillText(`Позиция: ${Math.floor(this.camera.x)}, ${Math.floor(this.camera.y)}`, 20, 30);
+    }
+}
+
+// Инициализация игры
+let game;
+window.addEventListener('load', () => {
+    game = new Game();
+});
+
+// Дополнительные методы для кнопок
+function buildBuilding(type) { game.buildBuilding(type); }
+function researchTech(tech) { game.researchTech(tech); }
+function initiateDiplomacy(action) { game.initiateDiplomacy(action); }
+function toggleCombatMode() { game.toggleCombatMode(); }
+function spawnUnit(type) { game.spawnUnit(type); }
+
+## js/world.js
+/**
+ * Класс мира - генерация и управление миром
+ */
+class World {
+    constructor() {
+        this.width = 2000;
+        this.height = 2000;
+        this.tiles = [];
+        this.tileSize = 32;
+        
+        this.generateWorld();
+    }
+    
+    generateWorld() {
+        // Генерация мира с разными биомами
+        for (let y = 0; y < this.height; y += this.tileSize) {
+            for (let x = 0; x < this.width; x += this.tileSize) {
+                const tile = {
+                    x: x,
+                    y: y,
+                    type: this.getBiomeType(x, y),
+                    resources: this.getResources(x, y)
+                };
+                this.tiles.push(tile);
+            }
+        }
+    }
+    
+    getBiomeType(x, y) {
+        // Используем шум для генерации биомов
+        const noise = this.perlinNoise(x / 100, y / 100);
+        
+        if (noise < 0.3) return 'water';
+        if (noise < 0.5) return 'grass';
+        if (noise < 0.7) return 'forest';
+        if (noise < 0.9) return 'mountain';
+        return 'desert';
+    }
+    
+    getResources(x, y) {
+        const resources = {};
+        const biome = this.getBiomeType(x, y);
+        
+        switch(biome) {
+            case 'forest':
+                resources.wood = Math.random() * 5;
+                resources.food = Math.random() * 2;
+                break;
+            case 'mountain':
+                resources.stone = Math.random() * 5;
+                resources.gold = Math.random() * 3;
+                break;
+            case 'grass':
+                resources.food = Math.random() * 5;
+                break;
+            case 'water':
+                resources.food = Math.random() * 3;
+                break;
+            case 'desert':
+                resources.gold = Math.random() * 4;
+                break;
+        }
+        
+        return resources;
+    }
+    
+    perlinNoise(x, y) {
+        // Простая реализация шума Перлина
+        const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+        return n - Math.floor(n);
+    }
+    
+    update() {
+        // Обновление ресурсов на карте
+        // Рост деревьев, восстановление ресурсов
+    }
+    
+    render(ctx) {
+        // Рендер тайлов
+        for (const tile of this.tiles) {
+            if (this.isVisible(tile)) {
+                ctx.fillStyle = this.getTileColor(tile.type);
+                ctx.fillRect(tile.x, tile.y, this.tileSize, this.tileSize);
+                
+                // Рисуем ресурсы на тайле
+                this.renderResources(ctx, tile);
+            }
+        }
+    }
+    
+    isVisible(tile) {
+        // Проверка видимости тайла
+        return tile.x > game.camera.x - this.tileSize && 
+               tile.x < game.camera.x + game.canvas.width / game.camera.zoom + this.tileSize &&
+               tile.y > game.camera.y - this.tileSize && 
+               tile.y < game.camera.y + game.canvas.height / game.camera.zoom + this.tileSize;
+    }
+    
+    getTileColor(type) {
+        const colors = {
+            'water': '#3498db',
+            'grass': '#2ecc71',
+            'forest': '#27ae60',
+            'mountain': '#7f8c8d',
+            'desert': '#f1c40f'
+        };
+        return colors[type];
+    }
+    
+    renderResources(ctx, tile) {
+        // Рендер ресурсов
+        for (const [resource, amount] of Object.entries(tile.resources)) {
+            if (amount > 0) {
+                ctx.fillStyle = this.getResourceColor(resource);
+                ctx.font = '10px Arial';
+                ctx.fillText(resource[0].toUpperCase(), tile.x + 5, tile.y + 15);
+            }
+        }
+    }
+    
+    getResourceColor(resource) {
+        const colors = {
+            'wood': '#8b4513',
+            'stone': '#696969',
+            'food': '#ff6347',
+            'gold': '#ffd700'
+        };
+        return colors[resource];
+    }
+    
+    getTileAt(x, y) {
+        const tileX = Math.floor(x / this.tileSize) * this.tileSize;
+        const tileY = Math.floor(y / this.tileSize) * this.tileSize;
+        
+        return this.tiles.find(tile => tile.x === tileX && tile.y === tileY);
+    }
+    
+    harvestResources(x, y) {
+        const tile = this.getTileAt(x, y);
+        if (!tile) return null;
+        
+        // Собираем ресурсы
+        const harvested = {};
+        for (const [resource, amount] of Object.entries(tile.resources)) {
+            if (amount > 0) {
+                const collected = Math.min(amount, 1);
+                harvested[resource] = collected;
+                tile.resources[resource] -= collected;
+            }
+        }
+        
+        return harvested;
+    }
+}
+
+## js/player.js
+/**
+ * Класс игрока
+ */
+class Player {
+    constructor() {
+        this.x = 100;
+        this.y = 100;
+        this.speed = 3;
+        this.direction = { x: 1, y: 0 };
+        this.inventory = new Resources();
+        this.stats = {
+            level: 1,
+            xp: 0,
+            hp: 100,
+            maxHp: 100,
+            attack: 5,
+            defense: 2
+        };
+    }
+    
+    update() {
+        // Обновление позиции игрока
+        this.updatePosition();
+        this.checkCollisions();
+    }
+    
+    updatePosition() {
+        // Движение игрока с клавиатуры
+        const keys = [];
+        
+        if (keys[37]) { // A - влево
+            this.x -= this.speed;
+        }
+        if (keys[39]) { // D - вправо
+            this.x += this.speed;
+        }
+        if (keys[38]) { // W - вверх
+            this.y -= this.speed;
+        }
+        if (keys[40]) { // S - вниз
+            this.y += this.speed;
+        }
+    }
+    
+    checkCollisions() {
+        // Проверка границ мира
+        this.x = Math.max(0, Math.min(this.x, game.world.width));
+        this.y = Math.max(0, Math.min(this.y, game.world.height));
+    }
+    
+    harvest() {
+        // Сбор ресурсов
+        const resources = game.world.harvestResources(this.x, this.y);
+        if (resources) {
+            for (const [resource, amount] of Object.entries(resources)) {
+                this.inventory.add(resource, amount);
+            }
+            return true;
+        }
+        return false;
+    }
+    
+    attack(target) {
+        // Атака цели
+        const damage = this.stats.attack + Math.random() * 3;
+        target.takeDamage(damage);
+        return damage;
+    }
+    
+    takeDamage(damage) {
+        const actualDamage = Math.max(1, damage - this.stats.defense);
+        this.stats.hp -= actualDamage;
+        
+        if (this.stats.hp <= 0) {
+            this.die();
+        }
+        
+        return actualDamage;
+    }
+    
+    die() {
+        alert('Игрок погиб! Игра начинается заново...');
+        this.stats.hp = this.stats.maxHp;
+        this.x = 100;
+        this.y = 100;
+    }
+    
+    gainXP(amount) {
+        this.stats.xp += amount;
+        if (this.stats.xp >= this.stats.level * 100) {
+            this.levelUp();
+        }
+    }
+    
+    levelUp() {
+        this.stats.level++;
+        this.stats.maxHp += 20;
+        this.stats.hp = this.stats.maxHp;
+        this.stats.attack += 2;
+        this.stats.defense += 1;
+        alert(`Уровень повышен! Новый уровень: ${this.stats.level}`);
+    }
+    
+    render(ctx) {
+        // Рендер игрока
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillRect(this.x - 10, this.y - 10, 20, 20);
+        
+        // Полоска здоровья
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillRect(this.x - 10, this.y - 25, 20, 5);
+        ctx.fillStyle = '#2ecc71';
+        ctx.fillRect(this.x - 10, this.y - 25, 20 * (this.stats.hp / this.stats.maxHp), 5);
+    }
+}
+
+## js/buildings.js
+/**
+ * Класс зданий
+ */
+class Buildings {
+    constructor() {
+        this.buildings = [];
+        this.buildingTypes = {
+            'house': {
+                name: 'Дом',
+                size: 40,
+                color: '#f39c12',
+                cost: { wood: 10, stone: 5 },
+                effects: { population: 5 }
+            },
+            'farm': {
+                name: 'Ферма',
+                size: 50,
+                color: '#27ae60',
+                cost: { wood: 15, stone: 10 },
+                effects: { food: 10 }
+            },
+            'barracks': {
+                name: 'Казармы',
+                size: 45,
+                color: '#c0392b',
+                cost: { wood: 20, stone: 15 },
+                effects: { military: 10 }
+            },
+            'tech_lab': {
+                name: 'Лаборатория',
+                size: 55,
+                color: '#8e44ad',
+                cost: { wood: 30, stone: 20, gold: 10 },
+                effects: { technology: 5 }
+            }
+        };
+    }
+    
+    placeBuilding(type, x, y) {
+        const buildingType = this.buildingTypes[type];
+        if (!buildingType) return false;
+        
+        // Проверка, что место свободно
+        if (this.isSpaceOccupied(x, y, buildingType.size)) {
+            alert('Место занято!');
+            return false;
+        }
+        
+        const building = {
+            type: type,
+            x: x,
+            y: y,
+            size: buildingType.size,
+            health: 100,
+            maxHealth: 100,
+            level: 1,
+            workers: 0,
+            production: 0
+        };
+        
+        this.buildings.push(building);
+        return true;
+    }
+    
+    isSpaceOccupied(x, y, size) {
+        return this.buildings.some(building => {
+            return Math.abs(building.x - x) < (building.size + size) / 2 &&
+                   Math.abs(building.y - y) < (building.size + size) / 2;
+        });
+    }
+    
+    getCost(type) {
+        return this.buildingTypes[type]?.cost || {};
+    }
+    
+    getBuildingType(type) {
+        return this.buildingTypes[type];
+    }
+    
+    getBuildingAt(x, y) {
+        return this.buildings.find(building => {
+            return Math.abs(building.x - x) < building.size / 2 &&
+                   Math.abs(building.y - y) < building.size / 2;
+        }) || null;
+    }
+    
+    update() {
+        // Обновление зданий
+        for (const building of this.buildings) {
+            this.updateProduction(building);
+            this.checkBuildingHealth(building);
+        }
+    }
+    
+    updateProduction(building) {
+        const type = this.buildingTypes[building.type];
+        if (type?.effects) {
+            for (const [resource, amount] of Object.entries(type.effects)) {
+                if (resource === 'population' || resource === 'military' || resource === 'technology') {
+                    continue; // Не-ресурсы не обновляются
+                }
+                game.resources.add(resource, amount * 0.1); // 10% производства в тик
+            }
+        }
+    }
+    
+    checkBuildingHealth(building) {
+        if (building.health <= 0) {
+            this.destroyBuilding(building);
+        }
+    }
+    
+    destroyBuilding(building) {
+        const index = this.buildings.indexOf(building);
+        if (index > -1) {
+            this.buildings.splice(index, 1);
+            alert(`${this.buildingTypes[building.type].name} уничтожен!`);
+        }
+    }
+    
+    upgradeBuilding(building) {
+        if (building.level < 5) {
+            building.level++;
+            building.maxHealth += 50;
+            building.health = building.maxHealth;
+            return true;
+        }
+        return false;
+    }
+    
+    render(ctx) {
+        for (const building of this.buildings) {
+            const type = this.buildingTypes[building.type];
+            
+            // Рендер здания
+            ctx.fillStyle = type.color;
+            ctx.fillRect(building.x - building.size/2, building.y - building.size/2, building.size, building.size);
+            
+            // Индикатор уровня
+            ctx.fillStyle = 'white';
+            ctx.font = '12px Arial';
+            ctx.fillText(`Ур. ${building.level}`, building.x, building.y);
+            
+            // Полоска здоровья
+            this.renderHealthBar(ctx, building);
+        }
+    }
+    
+    renderHealthBar(ctx, building) {
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillRect(building.x - building.size/2, building.y - building.size/2 - 10, building.size, 5);
+        
+        const healthPercent = building.health / building.maxHealth;
+        ctx.fillStyle = healthPercent > 0.5 ? '#2ecc71' : healthPercent > 0.25 ? '#f1c40f' : '#e74c3c';
+        ctx.fillRect(building.x - building.size/2, building.y - building.size/2 - 10, building.size * healthPercent, 5);
+    }
+    
+    getTotalProduction() {
+        const total = {};
+        for (const building of this.buildings) {
+            const type = this.buildingTypes[building.type];
+            if (type?.effects) {
+                for (const [resource, amount] of Object.entries(type.effects)) {
+                    total[resource] = (total[resource] || 0) + amount;
+                }
+            }
+        }
+        return total;
+    }
+}
+
+## js/resources.js
+/**
+ * Класс ресурсов
+ */
+class Resources {
+    constructor() {
+        this.wood = 100;
+        this.stone = 50;
+        this.food = 50;
+        this.gold = 20;
+        
+        // Производство ресурсов
+        this.production = {
+            wood: 0,
+            stone: 0,
+            food: 1,
+            gold: 0
+        };
+    }
+    
+    add(resource, amount) {
+        if (this.hasOwnProperty(resource)) {
+            this[resource] += amount;
+            return true;
+        }
+        return false;
+    }
+    
+    spend(cost) {
+        // Проверяем и тратим ресурсы
+        if (!this.hasEnough(cost)) return false;
+        
+        for (const [resource, amount] of Object.entries(cost)) {
+            if (this.hasOwnProperty(resource)) {
+                this[resource] -= amount;
+            }
+        }
+        return true;
+    }
+    
+    hasEnough(cost) {
+        for (const [resource, amount] of Object.entries(cost)) {
+            if (this.hasOwnProperty(resource) && this[resource] < amount) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    update() {
+        // Обновление производства
+        for (const [resource, amount] of Object.entries(this.production)) {
+            if (this.hasOwnProperty(resource)) {
+                this[resource] += amount * 0.1; // 10% производства в тик
+            }
+        }
+        
+        // Обновляем производство от зданий
+        const buildingProduction = game.buildings.getTotalProduction();
+        for (const [resource, amount] of Object.entries(buildingProduction)) {
+            if (this.hasOwnProperty(resource) && resource !== 'population' && 
+                resource !== 'military' && resource !== 'technology') {
+                this[resource] += amount * 0.05; // 5% от зданий
+            }
+        }
+    }
+    
+    getTotalResources() {
+        return {
+            wood: this.wood,
+            stone: this.stone,
+            food: this.food,
+            gold: this.gold
+        };
+    }
+}
+
+## js/combat.js
+/**
+ * Класс боевой системы
+ */
+class Combat {
+    constructor() {
+        this.units = [];
+        this.enemies = [];
+        this.combatMode = false;
+        
+        this.unitTypes = {
+            'warrior': {
+                name: 'Воин',
+                hp: 100,
+                attack: 10,
+                defense: 5,
+                speed: 2,
+                cost: { wood: 20, gold: 10 },
+                color: '#e74c3c'
+            },
+            'worker': {
+                name: 'Рабочий',
+                hp: 50,
+                attack: 2,
+                defense: 1,
+                speed: 1,
+                cost: { wood: 10, gold: 5 },
+                color: '#3498db'
+            }
+        };
+    }
+    
+    spawnUnit(type) {
+        const unitType = this.unitTypes[type];
+        if (!unitType) return false;
+        
+        const unit = {
+            type: type,
+            x: game.player.x + (Math.random() - 0.5) * 50,
+            y: game.player.y + (Math.random() - 0.5) * 50,
+            hp: unitType.hp,
+            maxHp: unitType.hp,
+            attack: unitType.attack,
+            defense: unitType.defense,
+            speed: unitType.speed,
+            target: null,
+            isAttacking: false
+        };
+        
+        this.units.push(unit);
+        return true;
+    }
+    
+    getUnitCost(type) {
+        return this.unitTypes[type]?.cost || {};
+    }
+    
+    attackAt(x, y) {
+        // Атака в указанной позиции
+        for (const unit of this.units) {
+            unit.target = { x: x, y: y };
+            unit.isAttacking = true;
+        }
+    }
+    
+    update() {
+        // Обновление юнитов
+        this.updateUnits();
+        this.updateEnemies();
+        this.checkCombat();
+    }
+    
+    updateUnits() {
+        for (const unit of this.units) {
+            if (unit.isAttacking && unit.target) {
+                this.moveToTarget(unit);
+            }
+        }
+    }
+    
+    moveToTarget(unit) {
+        const dx = unit.target.x - unit.x;
+        const dy = unit.target.y - unit.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        
+        if (dist > 5) {
+            unit.x += (dx/dist) * unit.speed;
+            unit.y += (dy/dist) * unit.speed;
+        } else {
+            unit.isAttacking = false;
+            unit.target = null;
+        }
+    }
+    
+    updateEnemies() {
+        // Обновление врагов
+        for (const enemy of this.enemies) {
+            this.enemyAI(enemy);
+        }
+    }
+    
+    enemyAI(enemy) {
+        // Простой ИИ врагов
+        const player = game.player;
+        const dist = Math.sqrt((enemy.x - player.x)**2 + (enemy.y - player.y)**2);
+        
+        if (dist < 100) {
+            // Враг атакует игрока
+            this.attackEnemy(enemy, player);
+        }
+    }
+    
+    attackEnemy(attacker, target) {
+        const damage = attacker.attack + Math.random() * 3;
+        if (target.takeDamage) {
+            target.takeDamage(damage);
+        }
+    }
+    
+    checkCombat() {
+        // Проверка боевых взаимодействий
+        for (const unit of this.units) {
+            for (const enemy of this.enemies) {
+                const dist = Math.sqrt((unit.x - enemy.x)**2 + (unit.y - enemy.y)**2);
+                if (dist < 20) {
+                    this.resolveCombat(unit, enemy);
+                }
+            }
+        }
+    }
+    
+    resolveCombat(unit, enemy) {
+        // Разрешение боя
+        const unitDamage = unit.attack + Math.random() * 3;
+        enemy.hp -= unitDamage;
+        
+        if (enemy.hp <= 0) {
+            this.removeEnemy(enemy);
+            game.player.gainXP(10);
+        }
+        
+        // Враг отвечает
+        const enemyDamage = enemy.attack + Math.random() * 2;
+        unit.hp -= Math.max(1, enemyDamage - unit.defense);
+        
+        if (unit.hp <= 0) {
+            this.removeUnit(unit);
+        }
+    }
+    
+    removeUnit(unit) {
+        const index = this.units.indexOf(unit);
+        if (index > -1) {
+            this.units.splice(index, 1);
+        }
+    }
+    
+    removeEnemy(enemy) {
+        const index = this.enemies.indexOf(enemy);
+        if (index > -1) {
+            this.enemies.splice(index, 1);
+        }
+    }
+    
+    spawnEnemies(count = 5) {
+        for (let i = 0; i < count; i++) {
+            const enemy = {
+                x: Math.random() * game.world.width,
+                y: Math.random() * game.world.height,
+                hp: 30 + Math.random() * 20,
+                maxHp: 50,
+                attack: 3 + Math.random() * 2,
+                defense: 1,
+                speed: 1
+            };
+            this.enemies.push(enemy);
+        }
+    }
+    
+    renderUnits(ctx) {
+        // Рендер юнитов игрока
+        for (const unit of this.units) {
+            const type = this.unitTypes[unit.type];
+            ctx.fillStyle = type.color;
+            ctx.fillRect(unit.x - 5, unit.y - 5, 10, 10);
+            
+            // Полоска здоровья
+            this.renderHealthBar(ctx, unit);
+        }
+        
+        // Рендер врагов
+        for (const enemy of this.enemies) {
+            ctx.fillStyle = '#8b0000';
+            ctx.fillRect(enemy.x - 5, enemy.y - 5, 10, 10);
+            
+            // Полоска здоровья
+            this.renderHealthBar(ctx, enemy);
+        }
+    }
+    
+    renderHealthBar(ctx, entity) {
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillRect(entity.x - 5, entity.y - 10, 10, 3);
+        
+        const healthPercent = entity.hp / entity.maxHp;
+        ctx.fillStyle = healthPercent > 0

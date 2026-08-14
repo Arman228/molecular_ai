@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Империя · симулятор города</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #101418;
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      color: #e0e6ed;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #game-container {
+      width: 100%;
+      max-width: 1400px;
+      height: 96vh;
+      display: grid;
+      grid-template-columns: 180px 1fr 220px;
+      grid-template-rows: auto 1fr auto;
+      gap: 8px;
+      background: #1a1f26;
+      border-radius: 20px;
+      padding: 10px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      border: 1px solid #2c3540;
+    }
+
+    /* ----- header + resources ----- */
+    #top-bar {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      background: #1e242c;
+      border-radius: 14px;
+      padding: 6px 16px;
+      border-bottom: 2px solid #2f3a46;
+      color: #cbd5e1;
+      font-weight: 500;
+    }
+
+    .res-group {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 0.9rem;
+    }
+
+    .res-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .res-icon {
+      font-size: 1.3rem;
+    }
+
+    .money-ic { color: #ffd966; }
+    .food-ic { color: #a3d977; }
+    .energy-ic { color: #ffb347; }
+    .water-ic { color: #6ec8ff; }
+
+    .mini-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-icon {
+      background: #2c3844;
+      border: none;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: 0.2s;
+    }
+
+    .btn-icon:hover {
+      background: #3d5060;
+      transform: scale(1.02);
+    }
+
+    /* left panel – build menu */
+    #build-panel {
+      background: #1b2129;
+      border-radius: 16px;
+      padding: 10px 6px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      grid-row: 2 / 3;
+      grid-column: 1 / 2;
+      border: 1px solid #2b3642;
+    }
+
+    #build-panel h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8b9bb0;
+      margin-bottom: 5px;
+      text-align: center;
+    }
+
+    .build-btn {
+      background: #252e38;
+      border: 1px solid #3a4754;
+      color: #d3dee9;
+      border-radius: 10px;
+      padding: 6px 6px;
+      font-size: 0.75rem;
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: 0.15s;
+      width: 100%;
+    }
+
+    .build-btn:hover {
+      background: #2f3d4d;
+      border-color: #5f7a94;
+    }
+
+    .cost {
+      color: #f1c40f;
+      font-size: 0.7rem;
+      background: #1d2a33;
+      padding: 2px 6px;
+      border-radius: 20px;
+    }
+
+    /* main map area */
+    #map-wrapper {
+      background: #11161d;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      grid-column: 2 / 3;
+      grid-row: 2 / 3;
+      border: 1px solid #2b3642;
+    }
+
+    #map-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #18212b;
+    }
+
+    /* мини-карта + события */
+    #right-panel {
+      background: #1b2129;
+      border-radius: 16px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      grid-column: 3 / 4;
+      grid-row: 2 / 3;
+      border: 1px solid #2b3642;
+      overflow-y: auto;
+    }
+
+    #minimap {
+      background: #10171f;
+      border-radius: 12px;
+      width: 100%;
+      aspect-ratio: 1/1;
+      border: 1px solid #34495e;
+    }
+
+    #event-box {
+      background: #1f2a33;
+      padding: 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      max-height: 130px;
+      overflow-y: auto;
+      line-height: 1.4;
+    }
+
+    #event-box p {
+      border-bottom: 1px dashed #3c4b5a;
+      padding: 4px 0;
+    }
+
+    .tax-panel {
+      background: #1a222b;
+      border-radius: 12px;
+      padding: 8px;
+      font-size: 0.8rem;
+    }
+
+    .tax-panel input {
+      width: 100%;
+      margin: 6px 0;
+      accent-color: #4aa3ff;
+    }
+
+    #chart-container {
+      background: #1a222b;
+      border-radius: 12px;
+      padding: 5px;
+      height: 100px;
+      margin-top: 5px;
+    }
+
+    canvas.chart {
+      width: 100%;
+      height: 90px;
+      display: block;
+    }
+
+    /* bottom status */
+    #footer-stats {
+      grid-column: 1 / -1;
+      background: #1a212a;
+      border-radius: 14px;
+      padding: 6px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      border-top: 1px solid #2f3c49;
+      color: #b0c4d9;
+    }
+
+    /* responsive — адаптивность */
+    @media (max-width: 900px) {
+      #game-container {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto 180px 1fr auto;
+        height: 98vh;
+      }
+      #build-panel { grid-column: 1 / -1; grid-row: 2 / 3; flex-direction: row; flex-wrap: wrap; }
+      #map-wrapper { grid-column: 1 / -1; grid-row: 3 / 4; min-height: 300px; }
+      #right-panel { grid-column: 1 / -1; grid-row: 4 / 5; flex-direction: row; flex-wrap: wrap; }
+      #minimap { width: 100px; height: 100px; }
+    }
+
+    /* скроллбар */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #1b222b; }
+    ::-webkit-scrollbar-thumb { background: #3a4c5e; border-radius: 10px; }
+  </style>
+</head>
+<body>
+<div id="game-container">
+  <!-- верхняя панель ресурсов -->
+  <div id="top-bar">
+    <div class="res-group">
+      <div class="res-item"><span class="res-icon money-ic">💰</span> <span id="money">2500</span></div>
+      <div class="res-item"><span class="res-icon food-ic">🍞</span> <span id="food">120</span></div>
+      <div class="res-item"><span class="res-icon energy-ic">⚡</span> <span id="energy">90</span></div>
+      <div class="res-item"><span class="res-icon water-ic">💧</span> <span id="water">110</span></div>
+      <div class="res-item">👥 <span id="population">120</span></div>
+    </div>
+    <div class="mini-actions">
+      <button class="btn-icon" id="saveBtn">💾</button>
+      <button class="btn-icon" id="loadBtn">📂</button>
+      <button class="btn-icon" id="themeToggle">🌙</button>
+    </div>
+  </div>
+
+  <!-- левая: строительство -->
+  <div id="build-panel">
+    <h3>⚒️ стройка</h3>
+    <button class="build-btn" data-type="road">🛣️ дорога <span class="cost">10💰</span></button>
+    <button class="build-btn" data-type="house">🏘️ дом <span class="cost">30💰</span></button>
+    <button class="build-btn" data-type="shop">🏪 магазин <span class="cost">25💰</span></button>
+    <button class="build-btn" data-type="factory">🏭 завод <span class="cost">50💰</span></button>
+    <button class="build-btn" data-type="park">🌳 парк <span class="cost">15💰</span></button>
+    <button class="build-btn" data-type="metro">🚇 метро <span class="cost">80💰</span></button>
+    <button class="build-btn" data-type="power">🔋 энергия <span class="cost">40💰</span></button>
+    <button class="build-btn" data-type="waterplant">🚰 вода <span class="cost">40💰</span></button>
+    <button class="build-btn" data-type="cinema">🎬 кино <span class="cost">35💰</span></button>
+    <button class="build-btn" data-type="school">📚 школа <span class="cost">45💰</span></button>
+    <button class="build-btn" data-type="hospital">🏥 больница <span class="cost">60💰</span></button>
+    <button class="build-btn" data-type="police">🚓 полиция <span class="cost">55💰</span></button>
+    <button class="build-btn" data-type="office">🏢 офис <span class="cost">45💰</span></button>
+    <button class="build-btn" data-type="mall">🛍️ ТЦ <span class="cost">70💰</span></button>
+    <button class="build-btn" data-type="farm">🌾 ферма <span class="cost">20💰</span></button>
+    <button class="build-btn" data-type="market">🥕 рынок <span class="cost">18💰</span></button>
+    <button class="build-btn" data-type="bank">🏦 банк <span class="cost">90💰</span></button>
+    <button class="build-btn" data-type="stadium">🏟️ стадион <span class="cost">120💰</span></button>
+    <button class="build-btn" data-type="university">🎓 универ <span class="cost">110💰</span></button>
+    <button class="build-btn" data-type="park">🌿 сквер <span class="cost">12💰</span></button>
+  </div>
+
+  <!-- центр: карта -->
+  <div id="map-wrapper">
+    <canvas id="map-canvas" width="800" height="600"></canvas>
+  </div>
+
+  <!-- правая панель -->
+  <div id="right-panel">
+    <canvas id="minimap" width="160" height="160"></canvas>
+    <div class="tax-panel">
+      <label>📊 налог %: <input type="range" id="taxRange" min="0" max="20" value="8"> <span id="taxVal">8%</span></label>
+    </div>
+    <div id="event-box">
+      <p>⭐ город основан</p>
+    </div>
+    <div id="chart-container">
+      <canvas id="chartCanvas" width="200" height="80" class="chart"></canvas>
+    </div>
+  </div>
+
+  <!-- футер -->
+  <div id="footer-stats">
+    <span>🏭 пром: 0</span> <span>🏘️ жильё: 0</span> <span>🏪 коммерция: 0</span> <span>🌳 зелень: 0</span>
+    <span id="techStatus">🔬 технологий: 0/5</span>
+  </div>
+</div>
+
+<script>
+  (function(){
+    // ---------- ИГРОВОЕ СОСТОЯНИЕ ----------
+    const state = {
+      money: 2500,
+      food: 120,
+      energy: 90,
+      water: 110,
+      population: 120,
+      taxRate: 8,
+      buildings: [], // {x, y, type, zone}
+      zones: {
+        residential: 0,
+        commercial: 0,
+        industrial: 0,
+        green: 0
+      },
+      pollution: 0,
+      techLevel: 0,
+      events: [],
+      lastTick: 0,
+      history: [2500, 2500, 2500]
+    };
+
+    // 20+ типов уже в кнопках — маппинг
+    const BUILD_COST = {road:10, house:30, shop:25, factory:50, park:15, metro:80, power:40, waterplant:40, cinema:35, school:45, hospital:60, police:55, office:45, mall:70, farm:20, market:18, bank:90, stadium:120, university:110, park2:12};
+    const BUILD_ZONE = {house:'residential', shop:'commercial', factory:'industrial', park:'green', park2:'green', mall:'commercial', office:'commercial', cinema:'commercial', school:'residential', hospital:'residential', police:'residential', stadium:'commercial', university:'residential', metro:'commercial', power:'industrial', waterplant:'industrial', farm:'green', market:'commercial', bank:'commercial', road:'green'};
+
+    // элементы
+    const canvas = document.getElementById('map-canvas');
+    const ctx = canvas.getContext('2d');
+    const miniCanvas = document.getElementById('minimap');
+    const miniCtx = miniCanvas.getContext('2d');
+    const chartCanvas = document.getElementById('chartCanvas');
+    const chartCtx = chartCanvas.getContext('2d');
+
+    const moneyEl = document.getElementById('money');
+    const foodEl = document.getElementById('food');
+    const energyEl = document.getElementById('energy');
+    const waterEl = document.getElementById('water');
+    const popEl = document.getElementById('population');
+    const taxRange = document.getElementById('taxRange');
+    const taxVal = document.getElementById('taxVal');
+    const eventBox = document.getElementById('event-box');
+    const footer = document.getElementById('footer-stats').children;
+
+    // ---------- генерация сетки (30x20) ----------
+    const GRID_W = 30, GRID_H = 20;
+    let grid = Array(GRID_H).fill().map(() => Array(GRID_W).fill(null)); // null или объект здания
+
+    // ---------- отрисовка карты ----------
+    function drawMap() {
+      const cellW = canvas.width / GRID_W;
+      const cellH = canvas.height / GRID_H;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // фон сетка
+      for (let y = 0; y < GRID_H; y++) {
+        for (let x = 0; x < GRID_W; x++) {
+          const b = grid[y][x];
+          ctx.fillStyle = '#1b2836';
+          if (b) {
+            switch (b.type) {
+              case 'road': ctx.fillStyle = '#4a5b6c'; break;
+              case 'house': ctx.fillStyle = '#7f8c8d'; break;
+              case 'shop': ctx.fillStyle = '#e67e22'; break;
+              case 'factory': ctx.fillStyle = '#b03a2e'; break;
+              case 'park': ctx.fillStyle = '#27ae60'; break;
+              case 'metro': ctx.fillStyle = '#2c3e50'; break;
+              default: ctx.fillStyle = '#3a4a5a';
+            }
+          }
+          ctx.fillRect(x * cellW + 1, y * cellH + 1, cellW - 2, cellH - 2);
+          if (b) {
+            ctx.fillStyle = 'rgba(255,255,240,0.2)';
+            ctx.font = '8px sans-serif';
+            ctx.fillText(b.type[0].toUpperCase(), x * cellW + 4, y * cellH + 12);
+          }
+        }
+      }
+      drawMinimap();
+    }
+
+    function drawMinimap() {
+      miniCtx.clearRect(0, 0, 160, 160);
+      const scaleX = 160 / GRID_W;
+      const scaleY = 160 / GRID_H;
+      for (let y = 0; y < GRID_H; y++) {
+        for (let x = 0; x < GRID_W; x++) {
+          const b = grid[y][x];
+          if (b) {
+            if (b.type === 'road') miniCtx.fillStyle = '#7f8c8d';
+            else if (b.type === 'park') miniCtx.fillStyle = '#2ecc71';
+            else miniCtx.fillStyle = '#e67e22';
+          } else miniCtx.fillStyle = '#1c2732';
+          miniCtx.fillRect(x * scaleX, y * scaleY, scaleX, scaleY);
+        }
+      }
+    }
+
+    // ---------- добавление здания ----------
+    function placeBuilding(type) {
+      const cost = BUILD_COST[type] || 20;
+      if (state.money < cost) { addEvent('💰 не хватает денег'); return; }
+
+      // ищем пустую клетку (рандом)
+      for (let tries = 0; tries < 100; tries++) {
+        const rx = Math.floor(Math.random() * GRID_W);
+        const ry = Math.floor(Math.random() * GRID_H);
+        if (!grid[ry][rx]) {
+          const zone = BUILD_ZONE[type] || 'residential';
+          grid[ry][rx] = { type, zone, x: rx, y: ry };
+          state.money -= cost;
+          if (zone === 'residential') state.zones.residential++;
+          else if (zone === 'commercial') state.zones.commercial++;
+          else if (zone === 'industrial') state.zones.industrial++;
+          else if (zone === 'green') state.zones.green++;
+          updateResourcesUI();
+          drawMap();
+          addEvent(`🏗️ построено: ${type}`);
+          return;
+        }
+      }
+      addEvent('⚠️ нет места');
+    }
+
+    // ---------- ресурсы и симуляция ----------
+    function updateResourcesUI() {
+      moneyEl.textContent = Math.floor(state.money);
+      foodEl.textContent = Math.floor(state.food);
+      energyEl.textContent = Math.floor(state.energy);
+      waterEl.textContent = Math.floor(state.water);
+      popEl.textContent = state.population;
+      taxVal.textContent = taxRange.value + '%';
+    }
+
+    function addEvent(text) {
+      const p = document.createElement('p');
+      p.textContent = '• ' + text;
+      eventBox.prepend(p);
+      if (eventBox.children.length > 4) eventBox.removeChild(eventBox.lastChild);
+    }
+
+    // ---------- игровой тик ----------
+    function tick() {
+      // налоги, потребление
+      const taxIncome = (state.population * state.taxRate * 0.5);
+      state.money += taxIncome;
+      state.food -= state.population * 0.02;
+      state.energy -= state.zones.industrial * 0.5 + state.population * 0.02;
+      state.water -= state.population * 0.03 + state.zones.commercial * 0.1;
+      if (state.food < 0) state.food = 0;
+      if (state.energy < 0) state.energy = 0;
+      if (state.water < 0) state.water = 0;
+
+      // население растёт от жилья
+      state.population = Math.max(50, state.zones.residential * 8 + 50);
+      // экология: парки уменьшают загрязнение
+      state.pollution = Math.max(0, state.zones.industrial * 2 - state.zones.green * 0.5 + (state.energy<0?5:0));
+
+      // случайные события
+      if (Math.random() < 0.03) {
+        const events = ['🔥 пожар', '🦠 эпидемия', '📉 кризис', '⚡ авария'];
+        const ev = events[Math.floor(Math.random() * events.length)];
+        addEvent(ev);
+        if (ev.includes('пожар')) state.money -= 40;
+        if (ev.includes('кризис')) state.money *= 0.9;
+      }
+
+      // технологический прогресс
+      if (state.money > 600 && state.techLevel < 5) {
+        state.techLevel++;
+        state.money -= 150;
+        addEvent('🔬 технология +1');
+      }
+
+      // история для графика
+      state.history.push(state.money);
+      if (state.history.length > 20) state.history.shift();
+
+      updateResourcesUI();
+      drawChart();
+      updateFooter();
+      drawMap();
+    }
+
+    function updateFooter() {
+      footer[0].textContent = `🏭 пром: ${state.zones.industrial}`;
+      footer[1].textContent = `🏘️ жильё: ${state.zones.residential}`;
+      footer[2].textContent = `🏪 коммерция: ${state.zones.commercial}`;
+      footer[3].textContent = `🌳 зелень: ${state.zones.green}`;
+      footer[4].textContent = `🔬 технологий: ${state.techLevel}/5`;
+    }
+
+    function drawChart() {
+      chartCtx.clearRect(0,0,200,80);
+      chartCtx.fillStyle = '#1a2027';
+      chartCtx.fillRect(0,0,200,80);
+      chartCtx.strokeStyle = '#f1c40f';
+      chartCtx.beginPath();
+      const step = 200 / (state.history.length || 1);
+      state.history.forEach((val, i) => {
+        const x = i * step;
+        const y = 70 - Math.min(60, val / 100);
+        i === 0 ? chartCtx.moveTo(x, y) : chartCtx.lineTo(x, y);
+      });
+      chartCtx.stroke();
+    }
+
+    // ---------- сохранение/загрузка ----------
+    function saveGame() {
+      const data = { money: state.money, food: state.food, energy: state.energy, water: state.water, grid: grid, zones: state.zones, tech: state.techLevel };
+      localStorage.setItem('empire_save', JSON.stringify(data));
+      addEvent('💾 сохранено');
+    }
+
+    function loadGame() {
+      const save = localStorage.getItem('empire_save');
+      if (save) {
+        const data = JSON.parse(save);
+        state.money = data.money; state.food = data.food; state.energy = data.energy; state.water = data.water;
+        grid = data.grid; state.zones = data.zones; state.techLevel = data.tech;
+        updateResourcesUI(); drawMap(); updateFooter(); addEvent('📂 загружено');
+      } else addEvent('❌ нет сохранения');
+    }
+
+    // ---------- инициализация ----------
+    // стартовые здания для наглядности
+    function initBuildings() {
+      // пара домов и дорога
+      grid[4][5] = { type: 'house', zone: 'residential' };
+      grid[4][6] = { type: 'house', zone: 'residential' };
+      grid[5][5] = { type: 'shop', zone: 'commercial' };
+      grid[6][5] = { type: 'park', zone: 'green' };
+      grid[7][5] = { type: 'road', zone: 'green' };
+      state.zones.residential = 2; state.zones.commercial = 1; state.zones.green = 2;
+      drawMap(); updateFooter();
+    }
+
+    // ---------- обработчики ----------
+    document.querySelectorAll('.build-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const type = btn.dataset.type;
+        placeBuilding(type);
+      });
+    });
+
+    taxRange.addEventListener('input', () => {
+      state.taxRate = parseInt(taxRange.value);
+      taxVal.textContent = taxRange.value + '%';
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', saveGame);
+    document.getElementById('loadBtn').addEventListener('click', loadGame);
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('dark-theme');
+      addEvent('🌙 тема переключена (адаптивность)');
+    });
+
+    // кастомная тёмная тема (уже тёмная по умолчанию, переключение лёгкое)
+    // адаптивность уже реализована через media query
+
+    // запуск
+    initBuildings();
+    updateResourcesUI();
+    drawChart();
+
+    // тик каждые 2 сек
+    setInterval(tick, 2000);
+  })();
+</script>
+</body>
+</html>

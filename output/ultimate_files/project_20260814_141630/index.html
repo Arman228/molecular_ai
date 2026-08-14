@@ -1,0 +1,823 @@
+Вот полноценная HTML-страница с пошаговой стратегией, включающей карту, 4 цивилизации, ресурсы и технологии.
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пошаговая стратегия: Эпоха Империй</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            width: 1200px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #f0c040;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            letter-spacing: 3px;
+        }
+
+        .game-layout {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Карта */
+        .map-container {
+            flex: 2;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 15px;
+            border: 2px solid #4a6fa5;
+        }
+
+        .map-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 4px;
+            background: #2d5a27;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .tile {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            border: 1px solid rgba(0,0,0,0.2);
+        }
+
+        .tile:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(255,255,255,0.3);
+            z-index: 10;
+        }
+
+        .tile.grass { background: #4caf50; }
+        .tile.forest { background: #1b5e20; }
+        .tile.water { background: #0288d1; }
+        .tile.mountain { background: #795548; }
+        .tile.desert { background: #f9a825; }
+
+        /* Цивилизации */
+        .civilizations-panel {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 15px;
+            border: 2px solid #4a6fa5;
+        }
+
+        .civ-title {
+            color: #f0c040;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+            text-align: center;
+            border-bottom: 2px solid #f0c040;
+            padding-bottom: 8px;
+        }
+
+        .civ-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .civ-card.active {
+            box-shadow: 0 0 15px rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        .civ-card h3 {
+            font-size: 1rem;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .civ-resources {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            font-size: 0.8rem;
+        }
+
+        .resource-item {
+            background: rgba(0,0,0,0.3);
+            padding: 3px 6px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .resource-icon {
+            font-size: 1rem;
+        }
+
+        /* Управление */
+        .controls-panel {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 15px;
+            border: 2px solid #4a6fa5;
+            margin-bottom: 20px;
+        }
+
+        .controls-title {
+            color: #f0c040;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+            text-align: center;
+        }
+
+        .tech-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .tech-btn {
+            background: #2a4a7f;
+            border: 2px solid #4a6fa5;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .tech-btn:hover:not(:disabled) {
+            background: #3a6a9f;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .tech-btn:disabled {
+            background: #333;
+            border-color: #555;
+            color: #777;
+            cursor: not-allowed;
+        }
+
+        .tech-btn.learned {
+            background: #2e7d32;
+            border-color: #4caf50;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            background: #ff6f00;
+            border: none;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            background: #ff8f00;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,111,0,0.3);
+        }
+
+        .action-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        /* Лог */
+        .log-panel {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #4a6fa5;
+        }
+
+        .log-entry {
+            color: #ccc;
+            font-size: 0.85rem;
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-entry.system { color: #f0c040; }
+        .log-entry.combat { color: #ff5252; }
+        .log-entry.economy { color: #69f0ae; }
+        .log-entry.tech { color: #40c4ff; }
+
+        .turn-indicator {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .turn-number {
+            color: #f0c040;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        /* Улучшения */
+        .civ-card .improvements {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+            flex-wrap: wrap;
+        }
+
+        .improvement-tag {
+            background: #ff6f00;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .selected-tile-info {
+            background: rgba(255,255,255,0.1);
+            padding: 8px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: white;
+            border-left: 3px solid #f0c040;
+        }
+
+        @media (max-width: 900px) {
+            .game-layout {
+                flex-direction: column;
+            }
+            .map-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>⚔️ ЭПОХА ИМПЕРИЙ ⚔️</h1>
+        <div class="turn-indicator">Ход: <span class="turn-number" id="turnNumber">1</span> | Вы: <span id="currentCivName">Рим</span></div>
+        
+        <div class="game-layout">
+            <!-- Карта -->
+            <div class="map-container">
+                <div class="map-grid" id="mapGrid"></div>
+                <div class="selected-tile-info" id="tileInfo">Выберите клетку на карте</div>
+            </div>
+
+            <!-- Цивилизации -->
+            <div class="civilizations-panel">
+                <div class="civ-title">🏰 ЦИВИЛИЗАЦИИ</div>
+                <div id="civList"></div>
+            </div>
+        </div>
+
+        <!-- Управление -->
+        <div class="controls-panel">
+            <div class="controls-title">🔬 ТЕХНОЛОГИИ И ДЕЙСТВИЯ</div>
+            <div class="tech-buttons" id="techButtons"></div>
+            <div class="action-buttons">
+                <button class="action-btn" id="endTurnBtn">⏭ Следующий ход</button>
+                <button class="action-btn" id="buildCityBtn" style="background: #1565c0;">🏛 Построить город</button>
+                <button class="action-btn" id="trainUnitBtn" style="background: #c62828;">🛡 Нанять солдат</button>
+                <button class="action-btn" id="attackBtn" style="background: #ef6c00;">⚔️ Атаковать</button>
+            </div>
+        </div>
+
+        <!-- Лог -->
+        <div class="log-panel" id="logPanel">
+            <div class="log-entry system">Добро пожаловать в игру! Выберите цивилизацию и начните строить империю.</div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== КОНСТАНТЫ И НАЧАЛЬНОЕ СОСТОЯНИЕ ====================
+        const GRID_SIZE = 10;
+        const TILE_TYPES = ['grass', 'forest', 'water', 'mountain', 'desert'];
+        const TILE_NAMES = {
+            grass: '🌾 Равнина',
+            forest: '🌲 Лес',
+            water: '🌊 Вода',
+            mountain: '⛰️ Горы',
+            desert: '🏜️ Пустыня'
+        };
+
+        const CIVILIZATIONS = [
+            { id: 0, name: 'Рим', color: '#c62828', icon: '🏛️', bonus: 'Военная мощь +20%' },
+            { id: 1, name: 'Египет', color: '#f9a825', icon: '🔺', bonus: 'Ресурсы +10%' },
+            { id: 2, name: 'Китай', color: '#c2185b', icon: '🐉', bonus: 'Технологии +20%' },
+            { id: 3, name: 'Монголия', color: '#2e7d32', icon: '🐴', bonus: 'Движение +1' }
+        ];
+
+        const TECH_TREE = [
+            { id: 'agriculture', name: 'Сельское хозяйство', cost: 50, effect: '+3 еды/ход' },
+            { id: 'mining', name: 'Горное дело', cost: 60, effect: '+3 железа/ход' },
+            { id: 'trade', name: 'Торговля', cost: 80, effect: '+3 золота/ход' },
+            { id: 'military', name: 'Военное дело', cost: 70, effect: '+2 атака' },
+            { id: 'science', name: 'Наука', cost: 90, effect: '+2 науки/ход' },
+            { id: 'architecture', name: 'Архитектура', cost: 100, effect: 'Строительство дешевле' }
+        ];
+
+        // Игровое состояние
+        let gameState = {
+            turn: 1,
+            currentCivIndex: 0,
+            map: [],
+            civs: [],
+            selectedTile: null,
+            selectedUnit: null,
+            log: []
+        };
+
+        // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+        function initGame() {
+            // Генерируем карту
+            gameState.map = [];
+            for (let y = 0; y < GRID_SIZE; y++) {
+                let row = [];
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    let type = TILE_TYPES[Math.floor(Math.random() * TILE_TYPES.length)];
+                    // Добавляем больше равнин для баланса
+                    if (Math.random() < 0.3) type = 'grass';
+                    row.push({
+                        type: type,
+                        owner: null,
+                        city: false,
+                        units: [],
+                        resource: null
+                    });
+                }
+                gameState.map.push(row);
+            }
+
+            // Создаем цивилизации
+            gameState.civs = CIVILIZATIONS.map((civ, idx) => ({
+                ...civ,
+                resources: { food: 50, gold: 50, iron: 20, science: 10 },
+                techs: [],
+                cities: 1,
+                units: 3,
+                color: civ.color
+            }));
+
+            // Размещаем стартовые города
+            placeStartingCities();
+
+            // Устанавливаем активную цивилизацию
+            gameState.currentCivIndex = 0;
+
+            renderAll();
+            addLog('Игра началась! Вы играете за Рим.', 'system');
+        }
+
+        function placeStartingCities() {
+            const positions = [
+                {x: 2, y: 2},
+                {x: 7, y: 2},
+                {x: 2, y: 7},
+                {x: 7, y: 7}
+            ];
+
+            positions.forEach((pos, idx) => {
+                const tile = gameState.map[pos.y][pos.x];
+                tile.type = 'grass';
+                tile.city = true;
+                tile.owner = idx;
+                // Стартовые ресурсы
+                tile.resource = { food: 5, gold: 3, iron: 2 };
+            });
+        }
+
+        // ==================== ОТРИСОВКА ====================
+        function renderAll() {
+            renderMap();
+            renderCivs();
+            renderTech();
+            renderLog();
+            renderTurnInfo();
+        }
+
+        function renderMap() {
+            const mapGrid = document.getElementById('mapGrid');
+            mapGrid.innerHTML = '';
+
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    const tile = gameState.map[y][x];
+                    const div = document.createElement('div');
+                    div.className = `tile ${tile.type}`;
+                    div.dataset.x = x;
+                    div.dataset.y = y;
+
+                    // Отображаем содержимое
+                    let content = '';
+                    if (tile.city) {
+                        content = '🏛️';
+                        div.style.border = `3px solid ${gameState.civs[tile.owner].color}`;
+                    } else if (tile.owner !== null) {
+                        div.style.border = `2px solid ${gameState.civs[tile.owner].color}`;
+                        content = '⚔️';
+                    }
+
+                    // Ресурсы
+                    if (tile.resource) {
+                        content += ' <span style="font-size:0.6rem;">💰</span>';
+                    }
+
+                    div.innerHTML = content;
+
+                    // Клик по клетке
+                    div.addEventListener('click', () => selectTile(x, y));
+
+                    mapGrid.appendChild(div);
+                }
+            }
+        }
+
+        function renderCivs() {
+            const civList = document.getElementById('civList');
+            civList.innerHTML = '';
+
+            gameState.civs.forEach((civ, idx) => {
+                const card = document.createElement('div');
+                card.className = 'civ-card';
+                if (idx === gameState.currentCivIndex) card.classList.add('active');
+                card.style.borderLeftColor = civ.color;
+
+                card.innerHTML = `
+                    <h3>${civ.icon} ${civ.name} ${idx === gameState.currentCivIndex ? '(вы)' : ''}</h3>
+                    <div class="civ-resources">
+                        <div class="resource-item"><span class="resource-icon">🌾</span> ${civ.resources.food}</div>
+                        <div class="resource-item"><span class="resource-icon">💰</span> ${civ.resources.gold}</div>
+                        <div class="resource-item"><span class="resource-icon">⛏️</span> ${civ.resources.iron}</div>
+                        <div class="resource-item"><span class="resource-icon">🔬</span> ${civ.resources.science}</div>
+                    </div>
+                    <div style="font-size:0.8rem; margin-top:5px; color:#aaa;">Города: ${civ.cities} | Войска: ${civ.units}</div>
+                    <div class="improvements">
+                        ${civ.techs.map(t => `<span class="improvement-tag">${t.name}</span>`).join('')}
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    if (idx === gameState.currentCivIndex) {
+                        addLog('Это уже ваша цивилизация!', 'system');
+                        return;
+                    }
+                    addLog(`Вы переключились на ${civ.name}`, 'system');
+                    gameState.currentCivIndex = idx;
+                    renderAll();
+                });
+
+                civList.appendChild(card);
+            });
+        }
+
+        function renderTech() {
+            const techButtons = document.getElementById('techButtons');
+            techButtons.innerHTML = '';
+
+            const currentCiv = gameState.civs[gameState.currentCivIndex];
+
+            TECH_TREE.forEach(tech => {
+                const isLearned = currentCiv.techs.some(t => t.id === tech.id);
+                const canAfford = currentCiv.resources.gold >= tech.cost;
+
+                const btn = document.createElement('button');
+                btn.className = 'tech-btn';
+                if (isLearned) btn.classList.add('learned');
+                btn.disabled = isLearned || !canAfford;
+                btn.innerHTML = `${tech.name} ${isLearned ? '✅' : `(${tech.cost}💰)`}`;
+                btn.title = tech.effect;
+
+                if (!isLearned && canAfford) {
+                    btn.addEventListener('click', () => learnTech(tech));
+                }
+
+                techButtons.appendChild(btn);
+            });
+        }
+
+        function renderLog() {
+            const logPanel = document.getElementById('logPanel');
+            logPanel.innerHTML = '';
+
+            // Показываем последние 20 записей
+            gameState.log.slice(-20).forEach(entry => {
+                const div = document.createElement('div');
+                div.className = `log-entry ${entry.type}`;
+                div.textContent = entry.text;
+                logPanel.appendChild(div);
+            });
+
+            logPanel.scrollTop = logPanel.scrollHeight;
+        }
+
+        function renderTurnInfo() {
+            document.getElementById('turnNumber').textContent = gameState.turn;
+            document.getElementById('currentCivName').textContent = gameState.civs[gameState.currentCivIndex].name;
+        }
+
+        // ==================== ЛОГИКА ИГРЫ ====================
+        function selectTile(x, y) {
+            const tile = gameState.map[y][x];
+            gameState.selectedTile = { x, y };
+
+            const tileInfo = document.getElementById('tileInfo');
+            let info = `Клетка (${x+1}, ${y+1}): ${TILE_NAMES[tile.type]}`;
+
+            if (tile.city) {
+                info += ` | 🏛️ Город: ${gameState.civs[tile.owner].name}`;
+            }
+            if (tile.owner !== null && !tile.city) {
+                info += ` | Владелец: ${gameState.civs[tile.owner].name}`;
+            }
+            if (tile.resource) {
+                info += ` | Ресурсы: 🌾${tile.resource.food || 0} 💰${tile.resource.gold || 0} ⛏️${tile.resource.iron || 0}`;
+            }
+            if (tile.units.length > 0) {
+                info += ` | Войска: ${tile.units.length}`;
+            }
+
+            tileInfo.textContent = info;
+            renderMap(); // Перерисовываем для подсветки
+        }
+
+        function learnTech(tech) {
+            const currentCiv = gameState.civs[gameState.currentCivIndex];
+            if (currentCiv.resources.gold < tech.cost) {
+                addLog('Недостаточно золота!', 'economy');
+                return;
+            }
+
+            currentCiv.resources.gold -= tech.cost;
+            currentCiv.techs.push(tech);
+            addLog(`🔬 ${currentCiv.name} изучили технологию: ${tech.name}`, 'tech');
+
+            // Применяем эффекты
+            switch(tech.id) {
+                case 'agriculture': currentCiv.resources.food += 3; break;
+                case 'mining': currentCiv.resources.iron += 3; break;
+                case 'trade': currentCiv.resources.gold += 3; break;
+                case 'military': currentCiv.units += 2; break;
+                case 'science': currentCiv.resources.science += 2; break;
+                case 'architecture': currentCiv.cities += 1; break;
+            }
+
+            renderAll();
+        }
+
+        function buildCity() {
+            if (!gameState.selectedTile) {
+                addLog('Выберите клетку для строительства города!', 'system');
+                return;
+            }
+
+            const { x, y } = gameState.selectedTile;
+            const tile = gameState.map[y][x];
+            const currentCiv = gameState.civs[gameState.currentCivIndex];
+
+            if (tile.city) {
+                addLog('Здесь уже есть город!', 'system');
+                return;
+            }
+
+            if (tile.owner !== null && tile.owner !== gameState.currentCivIndex) {
+                addLog('Эти земли принадлежат другой цивилизации!', 'system');
+                return;
+            }
+
+            if (tile.type === 'water' || tile.type === 'mountain') {
+                addLog('Нельзя строить город на воде или в горах!', 'system');
+                return;
+            }
+
+            if (currentCiv.resources.gold < 20) {
+                addLog('Недостаточно золота для строительства города (нужно 20)!', 'economy');
+                return;
+            }
+
+            currentCiv.resources.gold -= 20;
+            tile.city = true;
+            tile.owner = gameState.currentCivIndex;
+            currentCiv.cities++;
+            tile.resource = { food: 5, gold: 3, iron: 2 };
+
+            addLog(`🏛️ ${currentCiv.name} построили новый город на (${x+1}, ${y+1})!`, 'economy');
+            renderAll();
+        }
+
+        function trainUnit() {
+            if (!gameState.selectedTile) {
+                addLog('Выберите клетку для найма солдат!', 'system');
+                return;
+            }
+
+            const { x, y } = gameState.selectedTile;
+            const tile = gameState.map[y][x];
+            const currentCiv = gameState.civs[gameState.currentCivIndex];
+
+            if (tile.owner !== gameState.currentCivIndex && !tile.city) {
+                addLog('Вы можете нанимать войска только на своих землях!', 'system');
+                return;
+            }
+
+            if (currentCiv.resources.iron < 10) {
+                addLog('Недостаточно железа для найма (нужно 10)!', 'economy');
+                return;
+            }
+
+            currentCiv.resources.iron -= 10;
+            currentCiv.units++;
+            tile.units.push(gameState.currentCivIndex);
+
+            addLog(`🛡️ ${currentCiv.name} наняли солдат на (${x+1}, ${y+1})!`, 'combat');
+            renderAll();
+        }
+
+        function attack() {
+            if (!gameState.selectedTile) {
+                addLog('Выберите клетку для атаки!', 'system');
+                return;
+            }
+
+            const { x, y } = gameState.selectedTile;
+            const tile = gameState.map[y][x];
+            const currentCiv = gameState.civs[gameState.currentCivIndex];
+
+            if (tile.owner === null || tile.owner === gameState.currentCivIndex) {
+                addLog('Нельзя атаковать собственные или нейтральные земли!', 'system');
+                return;
+            }
+
+            if (currentCiv.units < 2) {
+                addLog('У вас недостаточно войск для атаки (нужно минимум 2)!', 'combat');
+                return;
+            }
+
+            const targetCiv = gameState.civs[tile.owner];
+            let attackPower = currentCiv.units * (currentCiv.techs.some(t => t.id === 'military') ? 1.5 : 1);
+            let defensePower = targetCiv.units * (tile.city ? 1.5 : 1);
+
+            if (attackPower > defensePower) {
+                // Победа
+                const losses = Math.floor(defensePower / 3);
+                currentCiv.units -= losses;
+                targetCiv.units = 0;
+                tile.owner = gameState.currentCivIndex;
+                if (tile.city) {
+                    targetCiv.cities--;
+                    currentCiv.cities++;
+                    tile.city = true;
+                }
+                addLog(`⚔️ ${currentCiv.name} захватили территорию (${x+1}, ${y+1}) у ${targetCiv.name}!`, 'combat');
+            } else {
+                // Поражение
+                const losses = Math.floor(attackPower / 2);
+                currentCiv.units -= losses;
+                targetCiv.units -= Math.floor(defensePower / 5);
+                addLog(`⚔️ ${currentCiv.name} проиграли атаку на (${x+1}, ${y+1})!`, 'combat');
+            }
+
+            renderAll();
+        }
+
+        function endTurn() {
+            gameState.turn++;
+            gameState.currentCivIndex = (gameState.currentCivIndex + 1) % 4;
+
+            // Производство ресурсов для всех цивилизаций
+            gameState.civs.forEach((civ, idx) => {
+                let foodProd = 5 + civ.cities * 3;
+                let goldProd = 3 + civ.cities * 2;
+                let ironProd = 2 + civ.cities;
+
+                // Бонусы за технологии
+                if (civ.techs.some(t => t.id === 'agriculture')) foodProd += 3;
+                if (civ.techs.some(t => t.id === 'trade')) goldProd += 3;
+                if (civ.techs.some(t => t.id === 'mining')) ironProd += 3;
+
+                civ.resources.food += foodProd;
+                civ.resources.gold += goldProd;
+                civ.resources.iron += ironProd;
+                civ.resources.science += 2;
+
+                // Бонус Египта
+                if (civ.name === 'Египет') {
+                    civ.resources.food += 2;
+                    civ.resources.gold += 2;
+                }
+            });
+
+            // Сброс выделения
+            gameState.selectedTile = null;
+
+            addLog(`⏭ Ход ${gameState.turn}. Ход переходит к ${gameState.civs[gameState.currentCivIndex].name}`, 'system');
+            renderAll();
+        }
+
+        function addLog(text, type = 'system') {
+            gameState.log.push({ text, type });
+            if (gameState.log.length > 50) gameState.log.shift();
+            renderLog();
+        }
+
+        // ==================== ЗАПУСК ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            initGame();
+
+            // Привязка обработчиков
+            document.getElementById('endTurnBtn').addEventListener('click', endTurn);
+            document.getElementById('buildCityBtn').addEventListener('click', buildCity);
+            document.getElementById('trainUnitBtn').addEventListener('click', trainUnit);
+            document.getElementById('attackBtn').addEventListener('click', attack);
+        });
+    </script>
+</body>
+</html>
+
+Эта игра включает:
+
+**Карта:**
+- Случайно генерируемая сетка 10x10 с типами местности (равнины, леса, вода, горы, пустыни)
+- Клик по клетке показывает её характеристики
+- Визуальное отображение владельцев территорий
+
+**4 цивилизации:**
+- Рим (военный бонус)
+- Египет (экономический бонус)
+- Китай (технологический бонус)
+- Монголия (бонус к движению)
+- Каждая имеет ресурсы: еда, золото, железо, наука
+
+**Технологии:**
+- 6 технологий для исследования
+- Каждая даёт уникальные бонусы
+- Требуют золото и улучшают производительность
+
+**Игровой процесс:**
+- Пошаговый ход с переключением между цивилизациями
+- Строительство городов на выбранной клетке
+- Найм солдат
+- Атака на чужие территории
+- Производство ресурсов каждый ход
+- Система лога событий
+
+Игра полностью self-contained — все стили и скрипты находятся в одном HTML-файле.

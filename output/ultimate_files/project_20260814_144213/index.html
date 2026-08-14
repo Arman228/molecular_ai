@@ -1,0 +1,926 @@
+
+# Вот полная реализация игры-песочницы с 2D миром, строительством, жителями и развитой системой:
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sandbox Empire - Игра-песочница</title>
+    <style>
+        /* ============ ОСНОВНЫЕ СТИЛИ ============ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ============ ИГРОВОЙ КОНТЕЙНЕР ============ */
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-height: 100vh;
+        }
+
+        /* ============ ВЕРХНЯЯ ПАНЕЛЬ ============ */
+        #top-panel {
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            z-index: 100;
+            border-bottom: 2px solid #f39c12;
+        }
+
+        #resources {
+            display: flex;
+            gap: 20px;
+            font-size: 16px;
+        }
+
+        .resource {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .resource-icon {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            border-radius: 3px;
+        }
+
+        .wood-icon { background: #795548; }
+        .stone-icon { background: #78909c; }
+        .food-icon { background: #4caf50; }
+
+        #time-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #time-btn, #speed-btn {
+            background: #f39c12;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        #time-btn:hover, #speed-btn:hover {
+            background: #e67e22;
+            transform: scale(1.05);
+        }
+
+        #save-btn, #load-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        #save-btn:hover, #load-btn:hover {
+            background: #219a52;
+        }
+
+        /* ============ ИГРОВОЕ ПОЛЕ ============ */
+        #game-canvas {
+            flex: 1;
+            display: block;
+            width: 100%;
+            cursor: crosshair;
+            background: #87CEEB;
+        }
+
+        /* ============ НИЖНЯЯ ПАНЕЛЬ ============ */
+        #bottom-panel {
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            border-top: 2px solid #f39c12;
+        }
+
+        #build-tools {
+            display: flex;
+            gap: 8px;
+        }
+
+        .build-btn {
+            background: #7f8c8d;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .build-btn:hover {
+            background: #95a5a6;
+            transform: translateY(-2px);
+        }
+
+        .build-btn.active {
+            background: #f39c12;
+        }
+
+        #info-panel {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+        }
+
+        #population {
+            color: #4fc3f7;
+        }
+
+        #achievements-btn {
+            background: #9b59b6;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        #achievements-btn:hover {
+            background: #8e44ad;
+        }
+
+        /* ============ ВСПЛЫВАЮЩИЕ ПОДСКАЗКИ ============ */
+        .tooltip {
+            position: fixed;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            pointer-events: none;
+            font-size: 13px;
+            z-index: 1000;
+            max-width: 250px;
+            border: 1px solid #f39c12;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        /* ============ МОДАЛЬНОЕ ОКНО ============ */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .achievement-item {
+            padding: 10px;
+            margin: 10px 0;
+            background: #ecf0f1;
+            border-radius: 5px;
+            border-left: 4px solid #f39c12;
+        }
+
+        .achievement-item.unlocked {
+            background: #d4efdf;
+            border-left-color: #27ae60;
+        }
+
+        /* ============ УВЕДОМЛЕНИЯ ============ */
+        #notification-area {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .notification {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #f39c12;
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ============ АДАПТИВНОСТЬ ============ */
+        @media (max-width: 768px) {
+            #top-panel, #bottom-panel {
+                padding: 8px 10px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            #resources {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            #build-tools {
+                flex-wrap: wrap;
+            }
+            
+            .build-btn {
+                flex: 1;
+                min-width: 80px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .resource {
+                font-size: 14px;
+            }
+            
+            #time-controls {
+                flex-wrap: wrap;
+            }
+            
+            #info-panel {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Верхняя панель -->
+        <div id="top-panel">
+            <div id="resources">
+                <div class="resource">
+                    <span class="resource-icon wood-icon"></span>
+                    <span id="wood-display">0</span>
+                </div>
+                <div class="resource">
+                    <span class="resource-icon stone-icon"></span>
+                    <span id="stone-display">0</span>
+                </div>
+                <div class="resource">
+                    <span class="resource-icon food-icon"></span>
+                    <span id="food-display">0</span>
+                </div>
+            </div>
+            
+            <div id="time-controls">
+                <span>⏰ <span id="time-display">День 1, ☀️</span></span>
+                <button id="speed-btn">⏩ Ускорить</button>
+                <button id="save-btn">💾 Сохранить</button>
+                <button id="load-btn">📂 Загрузить</button>
+            </div>
+        </div>
+        
+        <!-- Игровое поле -->
+        <canvas id="game-canvas"></canvas>
+        
+        <!-- Нижняя панель -->
+        <div id="bottom-panel">
+            <div id="build-tools">
+                <button class="build-btn active" data-tool="select">🖱️ Выбрать</button>
+                <button class="build-btn" data-tool="house">🏠 Дом</button>
+                <button class="build-btn" data-tool="woodcutter">🪓 Лесопилка</button>
+                <button class="build-btn" data-tool="stone">⛏️ Каменоломня</button>
+                <button class="build-btn" data-tool="farm">🌾 Ферма</button>
+                <button class="build-btn" data-tool="market">🏪 Рынок</button>
+            </div>
+            
+            <div id="info-panel">
+                <span>👥 <span id="population">0</span></span>
+                <button id="achievements-btn">🏆 Достижения</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно достижений -->
+    <div id="achievements-modal" class="modal">
+        <div class="modal-content">
+            <h2>🏆 Достижения</h2>
+            <div id="achievements-list"></div>
+            <button class="build-btn" onclick="closeAchievements()" style="width:100%; margin-top:20px;">Закрыть</button>
+        </div>
+    </div>
+    
+    <!-- Область уведомлений -->
+    <div id="notification-area"></div>
+
+    <script>
+        // ============ КОНСТАНТЫ ИГРЫ ============
+        const CANVAS_WIDTH = 1000;
+        const CANVAS_HEIGHT = 600;
+        const TILE_SIZE = 40;
+        
+        // Типы тайлов
+        const TILE_TYPES = {
+            GRASS: 0,
+            FOREST: 1,
+            STONE: 2,
+            WATER: 3,
+            SAND: 4
+        };
+        
+        // Типы зданий
+        const BUILDING_TYPES = {
+            HOUSE: { name: 'Дом', cost: { wood: 50, stone: 20 }, color: '#e74c3c', icon: '🏠' },
+            WOODCUTTER: { name: 'Лесопилка', cost: { wood: 30, stone: 10 }, color: '#8b4513', icon: '🪓' },
+            STONE_MINE: { name: 'Каменоломня', cost: { wood: 40, stone: 30 }, color: '#7f8c8d', icon: '⛏️' },
+            FARM: { name: 'Ферма', cost: { wood: 25, stone: 5 }, color: '#27ae60', icon: '🌾' },
+            MARKET: { name: 'Рынок', cost: { wood: 100, stone: 50 }, color: '#f39c12', icon: '🏪' }
+        };
+        
+        // Погодные условия
+        const WEATHER_TYPES = {
+            CLEAR: { name: 'Ясно', color: '#87CEEB', icon: '☀️' },
+            RAIN: { name: 'Дождь', color: '#5dade2', icon: '🌧️' },
+            SNOW: { name: 'Снег', color: '#d5d8dc', icon: '❄️' }
+        };
+        
+        // ============ СОСТОЯНИЕ ИГРЫ ============
+        let gameState = {
+            world: [],
+            buildings: [],
+            resources: { wood: 100, stone: 50, food: 100 },
+            population: 0,
+            day: 1,
+            timeSpeed: 1,
+            isNight: false,
+            weather: WEATHER_TYPES.CLEAR,
+            selectedTool: 'select',
+            villagers: [],
+            achievements: [],
+            notifications: []
+        };
+        
+        // ============ ОСНОВНЫЕ КОМПОНЕНТЫ ============
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = CANVAS_WIDTH;
+        canvas.height = CANVAS_HEIGHT;
+        
+        // ============ ГЕНЕРАЦИЯ МИРА ============
+        function generateWorld() {
+            gameState.world = [];
+            for (let y = 0; y < CANVAS_HEIGHT / TILE_SIZE; y++) {
+                gameState.world[y] = [];
+                for (let x = 0; x < CANVAS_WIDTH / TILE_SIZE; x++) {
+                    // Простая генерация с шумом
+                    const random = Math.random();
+                    let tileType = TILE_TYPES.GRASS;
+                    
+                    if (random < 0.15) {
+                        tileType = TILE_TYPES.FOREST;
+                    } else if (random < 0.20) {
+                        tileType = TILE_TYPES.STONE;
+                    } else if (random < 0.25) {
+                        tileType = TILE_TYPES.WATER;
+                    } else if (random < 0.30) {
+                        tileType = TILE_TYPES.SAND;
+                    }
+                    
+                    gameState.world[y][x] = {
+                        type: tileType,
+                        building: null
+                    };
+                }
+            }
+        }
+        
+        // ============ СИСТЕМА ЖИТЕЛЕЙ ============
+        class Villager {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.name = this.generateName();
+                this.job = 'Безработный';
+                this.workTimer = Math.floor(Math.random() * 10);
+                this.moveTimer = 0;
+                this.isWorking = false;
+                this.targetX = x;
+                this.targetY = y;
+            }
+            
+            generateName() {
+                const names = ['Иван', 'Петр', 'Мария', 'Анна', 'Сергей', 'Ольга', 'Дмитрий', 'Елена', 'Алексей', 'Наталья'];
+                return names[Math.floor(Math.random() * names.length)];
+            }
+            
+            update() {
+                // ИИ: работа или передвижение
+                this.moveTimer++;
+                this.workTimer++;
+                
+                if (this.moveTimer > 20) {
+                    this.moveTimer = 0;
+                    
+                    if (this.workTimer > 30) {
+                        this.workTimer = 0;
+                        this.isWorking = true;
+                        
+                        // Работа в зависимости от профессии
+                        if (this.job === 'Лесник') {
+                            const tile = this.findNearestTile(TILE_TYPES.FOREST);
+                            if (tile) {
+                                gameState.resources.wood += 1;
+                            }
+                        } else if (this.job === 'Шахтер') {
+                            const tile = this.findNearestTile(TILE_TYPES.STONE);
+                            if (tile) {
+                                gameState.resources.stone += 1;
+                            }
+                        } else if (this.job === 'Фермер') {
+                            gameState.resources.food += 2;
+                        } else if (this.job === 'Торговец') {
+                            this.trade();
+                        }
+                    } else {
+                        this.isWorking = false;
+                        // Случайное передвижение
+                        this.targetX = this.x + (Math.random() - 0.5) * 100;
+                        this.targetY = this.y + (Math.random() - 0.5) * 100;
+                    }
+                }
+                
+                // Плавное движение к цели
+                const dx = this.targetX - this.x;
+                const dy = this.targetY - this.y;
+                
+                if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+                    this.x += dx * 0.02;
+                    this.y += dy * 0.02;
+                }
+            }
+            
+            findNearestTile(type) {
+                // Поиск ближайшего тайла нужного типа
+                for (let y = 0; y < gameState.world.length; y++) {
+                    for (let x = 0; x < gameState.world[y].length; x++) {
+                        if (gameState.world[y][x].type === type) {
+                            return { x: x * TILE_SIZE + TILE_SIZE/2, y: y * TILE_SIZE + TILE_SIZE/2 };
+                        }
+                    }
+                }
+                return null;
+            }
+            
+            trade() {
+                // Простая торговля: обмен ресурсов
+                if (gameState.resources.wood > 20) {
+                    gameState.resources.wood -= 5;
+                    gameState.resources.food += 3;
+                }
+            }
+        }
+        
+        // ============ СИСТЕМА ДОСТИЖЕНИЙ ============
+        function checkAchievements() {
+            const achievements = [
+                { id: 'first_house', name: 'Первый дом', desc: 'Построй первый дом', condition: () => gameState.buildings.some(b => b.type === 'HOUSE') },
+                { id: 'pop_10', name: 'Население 10', desc: 'Достигни 10 жителей', condition: () => gameState.population >= 10 },
+                { id: 'rich', name: 'Богач', desc: 'Собери 1000 дерева', condition: () => gameState.resources.wood >= 1000 },
+                { id: 'builder', name: 'Строитель', desc: 'Построй 5 зданий', condition: () => gameState.buildings.length >= 5 },
+                { id: 'trader', name: 'Торговец', desc: 'Найми торговца', condition: () => gameState.villagers.some(v => v.job === 'Торговец') },
+                { id: 'survivor', name: 'Выживший', desc: 'Проживи 10 дней', condition: () => gameState.day >= 10 },
+            ];
+            
+            achievements.forEach(achievement => {
+                if (!gameState.achievements.includes(achievement.id) && achievement.condition()) {
+                    gameState.achievements.push(achievement.id);
+                    showNotification(`🏆 Достижение: ${achievement.name}!`);
+                    updateAchievementsUI();
+                }
+            });
+        }
+        
+        // ============ ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ============
+        function updateUI() {
+            document.getElementById('wood-display').textContent = Math.floor(gameState.resources.wood);
+            document.getElementById('stone-display').textContent = Math.floor(gameState.resources.stone);
+            document.getElementById('food-display').textContent = Math.floor(gameState.resources.food);
+            document.getElementById('population').textContent = gameState.villagers.length;
+            
+            // Время
+            const timeIcon = gameState.isNight ? '🌙' : '☀️';
+            document.getElementById('time-display').textContent = `День ${gameState.day}, ${timeIcon}`;
+            
+            // Погода
+            const weatherIcon = gameState.weather.icon;
+            document.getElementById('time-display').textContent += ` ${weatherIcon}`;
+        }
+        
+        // ============ ОТРИСОВКА ============
+        function draw() {
+            ctx.fillStyle = gameState.weather.color;
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            // Отрисовка тайлов
+            for (let y = 0; y < gameState.world.length; y++) {
+                for (let x = 0; x < gameState.world[y].length; x++) {
+                    const tile = gameState.world[y][x];
+                    const px = x * TILE_SIZE;
+                    const py = y * TILE_SIZE;
+                    
+                    // Цвет тайла
+                    let color = '#4caf50'; // трава
+                    if (tile.type === TILE_TYPES.FOREST) color = '#2e7d32';
+                    else if (tile.type === TILE_TYPES.STONE) color = '#90a4ae';
+                    else if (tile.type === TILE_TYPES.WATER) color = '#2196f3';
+                    else if (tile.type === TILE_TYPES.SAND) color = '#ffd54f';
+                    
+                    ctx.fillStyle = color;
+                    ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+                    
+                    // Рисуем деревья, камни и т.д.
+                    if (tile.type === TILE_TYPES.FOREST) {
+                        ctx.fillStyle = '#1b5e20';
+                        ctx.beginPath();
+                        ctx.arc(px + TILE_SIZE/2, py + TILE_SIZE/2, 10, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (tile.type === TILE_TYPES.STONE) {
+                        ctx.fillStyle = '#546e7a';
+                        ctx.fillRect(px + 10, py + 10, 20, 20);
+                    }
+                }
+            }
+            
+            // Отрисовка зданий
+            gameState.buildings.forEach(building => {
+                const type = BUILDING_TYPES[building.type];
+                ctx.fillStyle = type.color;
+                ctx.fillRect(building.x, building.y, TILE_SIZE, TILE_SIZE);
+                ctx.font = '20px Arial';
+                ctx.fillText(type.icon, building.x + 10, building.y + 30);
+            });
+            
+            // Отрисовка жителей
+            gameState.villagers.forEach(villager => {
+                ctx.fillStyle = '#ff5722';
+                ctx.beginPath();
+                ctx.arc(villager.x, villager.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Имя над жителем
+                ctx.font = '10px Arial';
+                ctx.fillStyle = 'white';
+                ctx.fillText(villager.name, villager.x - 15, villager.y - 10);
+            });
+            
+            // Эффекты погоды
+            if (gameState.weather === WEATHER_TYPES.RAIN) {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                for (let i = 0; i < 20; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(Math.random() * CANVAS_WIDTH, Math.random() * CANVAS_HEIGHT);
+                    ctx.lineTo(Math.random() * CANVAS_WIDTH + 10, Math.random() * CANVAS_HEIGHT + 10);
+                    ctx.stroke();
+                }
+            } else if (gameState.weather === WEATHER_TYPES.SNOW) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                for (let i = 0; i < 30; i++) {
+                    ctx.beginPath();
+                    ctx.arc(Math.random() * CANVAS_WIDTH, Math.random() * CANVAS_HEIGHT, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            // Затемнение ночью
+            if (gameState.isNight) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            }
+        }
+        
+        // ============ ИГРОВОЙ ЦИКЛ ============
+        function gameLoop() {
+            // Обновление жителей
+            gameState.villagers.forEach(villager => villager.update());
+            
+            // Обновление ресурсов от зданий
+            gameState.buildings.forEach(building => {
+                if (building.type === 'WOODCUTTER') {
+                    gameState.resources.wood += 0.1;
+                } else if (building.type === 'STONE_MINE') {
+                    gameState.resources.stone += 0.1;
+                } else if (building.type === 'FARM') {
+                    gameState.resources.food += 0.2;
+                }
+            });
+            
+            // Проверка достижений
+            checkAchievements();
+            
+            // Обновление интерфейса
+            updateUI();
+            
+            // Отрисовка
+            draw();
+            
+            // Управление скоростью
+            setTimeout(gameLoop, 1000 / (10 * gameState.timeSpeed));
+        }
+        
+        // ============ ОБРАБОТКА КЛИКОВ ============
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+            
+            const tileX = Math.floor(x / TILE_SIZE);
+            const tileY = Math.floor(y / TILE_SIZE);
+            
+            if (gameState.selectedTool === 'select') {
+                // Выбор жителя или здания
+                const villager = gameState.villagers.find(v => 
+                    Math.abs(v.x - x) < 20 && Math.abs(v.y - y) < 20
+                );
+                
+                if (villager) {
+                    showNotification(`Житель: ${villager.name}, Профессия: ${villager.job}`);
+                }
+            } else if (gameState.selectedTool === 'house') {
+                // Строительство дома - увеличивает население
+                if (canBuild('HOUSE', tileX, tileY)) {
+                    placeBuilding('HOUSE', tileX, tileY);
+                    // Добавляем нового жителя
+                    const villager = new Villager(x, y);
+                    gameState.villagers.push(villager);
+                    showNotification(`Новый житель: ${villager.name}!`);
+                }
+            } else if (gameState.selectedTool === 'woodcutter') {
+                if (canBuild('WOODCUTTER', tileX, tileY)) {
+                    placeBuilding('WOODCUTTER', tileX, tileY);
+                    // Нанимаем лесника
+                    const villager = new Villager(x, y);
+                    villager.job = 'Лесник';
+                    gameState.villagers.push(villager);
+                    showNotification('Лесник нанят!');
+                }
+            } else if (gameState.selectedTool === 'stone') {
+                if (canBuild('STONE_MINE', tileX, tileY)) {
+                    placeBuilding('STONE_MINE', tileX, tileY);
+                    const villager = new Villager(x, y);
+                    villager.job = 'Шахтер';
+                    gameState.villagers.push(villager);
+                    showNotification('Шахтер нанят!');
+                }
+            } else if (gameState.selectedTool === 'farm') {
+                if (canBuild('FARM', tileX, tileY)) {
+                    placeBuilding('FARM', tileX, tileY);
+                    const villager = new Villager(x, y);
+                    villager.job = 'Фермер';
+                    gameState.villagers.push(villager);
+                    showNotification('Фермер нанят!');
+                }
+            } else if (gameState.selectedTool === 'market') {
+                if (canBuild('MARKET', tileX, tileY)) {
+                    placeBuilding('MARKET', tileX, tileY);
+                    const villager = new Villager(x, y);
+                    villager.job = 'Торговец';
+                    gameState.villagers.push(villager);
+                    showNotification('Торговец нанят!');
+                }
+            }
+        });
+        
+        // ============ ПРОВЕРКА СТРОИТЕЛЬСТВА ============
+        function canBuild(buildingType, tileX, tileY) {
+            const building = BUILDING_TYPES[buildingType];
+            
+            // Проверка ресурсов
+            if (gameState.resources.wood < building.cost.wood || 
+                gameState.resources.stone < building.cost.stone) {
+                showNotification('Недостаточно ресурсов!');
+                return false;
+            }
+            
+            // Проверка что тайл свободен
+            if (gameState.world[tileY] && gameState.world[tileY][tileX]) {
+                if (gameState.world[tileY][tileX].building === null) {
+                    return true;
+                }
+            }
+            
+            showNotification('Нельзя строить здесь!');
+            return false;
+        }
+        
+        // ============ РАЗМЕЩЕНИЕ ЗДАНИЯ ============
+        function placeBuilding(buildingType, tileX, tileY) {
+            const building = BUILDING_TYPES[buildingType];
+            
+            // Списываем ресурсы
+            gameState.resources.wood -= building.cost.wood;
+            gameState.resources.stone -= building.cost.stone;
+            
+            // Размещаем здание
+            const buildingObj = {
+                type: buildingType,
+                x: tileX * TILE_SIZE,
+                y: tileY * TILE_SIZE
+            };
+            
+            gameState.buildings.push(buildingObj);
+            gameState.world[tileY][tileX].building = buildingObj;
+            
+            // Обновление населения
+            gameState.population = gameState.villagers.length;
+        }
+        
+        // ============ УПРАВЛЕНИЕ ВРЕМЕНЕМ ============
+        let dayTimer = 0;
+        
+        function updateTime() {
+            dayTimer++;
+            
+            // День длится 30 игровых тактов
+            if (dayTimer % 30 === 0) {
+                gameState.day++;
+                gameState.isNight = !gameState.isNight;
+                showNotification(`День ${gameState.day} начался!`);
+            }
+            
+            // Смена погоды каждые 50 тактов
+            if (dayTimer % 50 === 0) {
+                const weathers = Object.values(WEATHER_TYPES);
+                gameState.weather = weathers[Math.floor(Math.random() * weathers.length)];
+                showNotification(`Погода: ${gameState.weather.name}`);
+            }
+        }
+        
+        // ============ УВЕДОМЛЕНИЯ ============
+        function showNotification(message) {
+            const area = document.getElementById('notification-area');
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            area.appendChild(notification);
+            
+            // Автоматическое удаление через 3 секунды
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        // ============ ДОСТИЖЕНИЯ UI ============
+        function updateAchievementsUI() {
+            const list = document.getElementById('achievements-list');
+            list.innerHTML = '';
+            
+            const allAchievements = [
+                { id: 'first_house', name: 'Первый дом', desc: 'Построй первый дом' },
+                { id: 'pop_10', name: 'Население 10', desc: 'Достигни 10 жителей' },
+                { id: 'rich', name: 'Богач', desc: 'Собери 1000 дерева' },
+                { id: 'builder', name: 'Строитель', desc: 'Построй 5 зданий' },
+                { id: 'trader', name: 'Торговец', desc: 'Найми торговца' },
+                { id: 'survivor', name: 'Выживший', desc: 'Проживи 10 дней' },
+            ];
+            
+            allAchievements.forEach(achievement => {
+                const item = document.createElement('div');
+                item.className = 'achievement-item';
+                if (gameState.achievements.includes(achievement.id)) {
+                    item.classList.add('unlocked');
+                    item.innerHTML = `✅ <strong>${achievement.name}</strong> - ${achievement.desc}`;
+                } else {
+                    item.innerHTML = `🔒 <strong>${achievement.name}</strong> - ${achievement.desc}`;
+                }
+                list.appendChild(item);
+            });
+        }
+        
+        // ============ СОХРАНЕНИЕ/ЗАГРУЗКА ============
+        function saveGame() {
+            localStorage.setItem('sandboxEmpire', JSON.stringify(gameState));
+            showNotification('Игра сохранена!');
+        }
+        
+        function loadGame() {
+            const savedState = localStorage.getItem('sandboxEmpire');
+            if (savedState) {
+                gameState = JSON.parse(savedState);
+                showNotification('Игра загружена!');
+            } else {
+                showNotification('Нет сохранений!');
+            }
+        }
+        
+        // ============ ОБРАБОТЧИКИ КНОПОК ============
+        // Инструменты
+        document.querySelectorAll('.build-btn[data-tool]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.build-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                gameState.selectedTool = btn.dataset.tool;
+            });
+        });
+        
+        // Управление временем
+        document.getElementById('speed-btn').addEventListener('click', () => {
+            gameState.timeSpeed = gameState.timeSpeed === 1 ? 3 : 1;
+            document.getElementById('speed-btn').textContent = 
+                gameState.timeSpeed === 1 ? '⏩ Ускорить' : '⏪ Обычная';
+        });
+        
+        // Сохранение/Загрузка
+        document.getElementById('save-btn').addEventListener('click', saveGame);
+        document.getElementById('load-btn').addEventListener('click', loadGame);
+        
+        // Достижения
+        document.getElementById('achievements-btn').addEventListener('click', () => {
+            document.getElementById('achievements-modal').classList.add('active');
+            updateAchievementsUI();
+        });
+        
+        function closeAchievements() {
+            document.getElementById('achievements-modal').classList.remove('active');
+        }
+        
+        // ============ ЗАПУСК ИГРЫ ============
+        function init() {
+            generateWorld();
+            
+            // Начальные жители
+            for (let i = 0; i < 3; i++) {
+                const villager = new Villager(
+                    Math.random() * CANVAS_WIDTH,
+                    Math.random() * CANVAS_HEIGHT
+                );
+                gameState.villagers.push(villager);
+            }
+            
+            // Запуск игрового цикла
+            gameLoop();
+            
+            // Обновление времени
+            setInterval(updateTime, 1000);
+            
+            // Показываем приветствие
+            showNotification('🏰 Добро пожаловать в Sandbox Empire!');
+        }
+        
+        // Инициализация
+        init();
+    </script>
+</body>
+</html

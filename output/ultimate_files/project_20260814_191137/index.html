@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Космический рейнджер</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: #0a0a2a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            touch-action: manipulation;
+            overflow: hidden;
+        }
+
+        .game-container {
+            background: #000010;
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(0, 150, 255, 0.5), inset 0 0 40px rgba(0, 0, 50, 0.8);
+            padding: 10px;
+            border: 2px solid #2a6f9c;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            max-width: 800px;
+            height: auto;
+            border-radius: 10px;
+            background: radial-gradient(circle at 20% 20%, #0a1a3a, #020510);
+            box-shadow: inset 0 0 50px rgba(0, 255, 255, 0.2);
+            cursor: none;
+            touch-action: none;
+        }
+
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            color: #a0f0ff;
+            text-shadow: 0 0 10px #00ffff;
+            font-size: 1.5rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            background: rgba(0, 20, 40, 0.8);
+            border-radius: 10px 10px 0 0;
+            border-bottom: 2px solid #2a8faa;
+        }
+
+        .lives {
+            display: flex;
+            gap: 8px;
+        }
+
+        .life-heart {
+            color: #ff4466;
+            filter: drop-shadow(0 0 8px #ff0055);
+            font-size: 1.7rem;
+            line-height: 1;
+        }
+
+        .score {
+            color: #ffdd44;
+            text-shadow: 0 0 12px #ffaa00;
+        }
+
+        .game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            border-radius: 15px;
+            z-index: 10;
+        }
+
+        .game-over-screen.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .game-over-content {
+            text-align: center;
+            background: rgba(10, 20, 40, 0.9);
+            padding: 30px 40px;
+            border-radius: 20px;
+            border: 2px solid #ffaa33;
+            box-shadow: 0 0 50px #ff5500;
+        }
+
+        .game-over-content h1 {
+            font-size: 3rem;
+            color: #ff4433;
+            text-shadow: 0 0 20px #ff0000;
+            margin-bottom: 10px;
+        }
+
+        .game-over-content p {
+            font-size: 1.8rem;
+            color: #ffdd44;
+            margin: 15px 0;
+        }
+
+        .btn-restart {
+            background: linear-gradient(145deg, #ffaa33, #ff6600);
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0a0a2a;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 0 20px #ff8800;
+            margin-top: 15px;
+            font-family: inherit;
+        }
+
+        .btn-restart:hover {
+            transform: scale(1.05);
+            background: #ffaa33;
+            box-shadow: 0 0 40px #ffaa00;
+        }
+
+        .controls-info {
+            color: #88ccff;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            background: rgba(0, 30, 60, 0.7);
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            border: 1px solid #2a9faa;
+        }
+
+        @media (max-width: 600px) {
+            .hud { font-size: 1.2rem; }
+            .life-heart { font-size: 1.3rem; }
+            .game-over-content h1 { font-size: 2.2rem; }
+            .btn-restart { padding: 12px 30px; font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="game-container" style="position: relative;">
+    <div class="hud">
+        <div class="lives" id="livesDisplay">❤️❤️❤️</div>
+        <div class="score" id="scoreDisplay">0000</div>
+    </div>
+    <div style="position: relative;">
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
+        <div class="game-over-screen" id="gameOverScreen">
+            <div class="game-over-content">
+                <h1>💥 GAME OVER 💥</h1>
+                <p>Счёт: <span id="finalScore">0</span></p>
+                <button class="btn-restart" id="restartBtn">🔄 РЕСТАРТ</button>
+                <div style="margin-top: 15px;">
+                    <span class="controls-info">← ↑ ↓ → + ПРОБЕЛ</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- Canvas и контекст ----------
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const livesDisplay = document.getElementById('livesDisplay');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const finalScoreSpan = document.getElementById('finalScore');
+        const restartBtn = document.getElementById('restartBtn');
+
+        // ---------- Параметры игры ----------
+        const W = 800;
+        const H = 500;
+        let gameActive = true;
+        let score = 0;
+        let lives = 3;
+        let gameTime = 0; // для сложности
+
+        // Игрок
+        const player = {
+            x: W / 2 - 30,
+            y: H - 80,
+            w: 60,
+            h: 50,
+            speed: 5,
+            bullets: [],
+            cooldown: 0,
+            maxCooldown: 12
+        };
+
+        // Массивы объектов
+        let asteroids = [];
+        let explosions = [];
+
+        // Звёзды для фона
+        const stars = [];
+        for (let i = 0; i < 150; i++) {
+            stars.push({
+                x: Math.random() * W,
+                y: Math.random() * H,
+                size: Math.random() * 2 + 0.5,
+                speed: Math.random() * 0.8 + 0.2,
+                alpha: Math.random() * 0.8 + 0.2,
+                bright: Math.random() * 0.5 + 0.5
+            });
+        }
+
+        // Управление
+        const keys = {
+            left: false,
+            right: false,
+            up: false,
+            down: false,
+            space: false
+        };
+
+        // Звуковые эффекты (Web Audio API)
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    audioCtx = new AudioContext();
+                }
+            }
+        }
+
+        function playShootSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(220, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            osc.connect(gain).connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.15);
+        }
+
+        function playExplosionSound() {
+            if (!audioCtx) return;
+            const bufferSize = audioCtx.sampleRate * 0.2;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+            }
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(800, audioCtx.currentTime);
+            filter.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+            source.connect(filter).connect(audioCtx.destination);
+            source.start(audioCtx.currentTime);
+        }
+
+        function playLoseLifeSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(160, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.4);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.connect(gain).connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        // ---------- Функции ----------
+        function resetGame() {
+            gameActive = true;
+            score = 0;
+            lives = 3;
+            gameTime = 0;
+            asteroids = [];
+            explosions = [];
+            player.bullets = [];
+            player.x = W / 2 - 30;
+            player.y = H - 80;
+            player.cooldown = 0;
+            updateHUD();
+            gameOverScreen.classList.remove('active');
+        }
+
+        function updateHUD() {
+            let hearts = '';
+            for (let i = 0; i < lives; i++) hearts += '❤️';
+            livesDisplay.innerHTML = hearts;
+            scoreDisplay.textContent = String(score).padStart(4, '0');
+        }
+
+        // Создание астероида
+        function spawnAsteroid() {
+            const size = Math.random() * 30 + 15;
+            const speedY = Math.random() * 2 + 1.5 + (gameTime * 0.05); // сложность
+            const speedX = (Math.random() - 0.5) * 1.2;
+            asteroids.push({
+                x: Math.random() * (W - size) + size / 2,
+                y: -size,
+                w: size,
+                h: size,
+                speedY: speedY,
+                speedX: speedX,
+                rotation: Math.random() * Math.PI * 2,
+                rotSpeed: (Math.random() - 0.5) * 0.1
+            });
+        }
+
+        // Взрыв при попадании
+        function addExplosion(x, y, big = false) {
+            const count = big ? 18 : 12;
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 6 + 2;
+                explosions.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 1.0,
+                    size: Math.random() * 8 + 4,
+                    color: `hsl(${Math.random() * 60 + 20}, 100%, 60%)`
+                });
+            }
+        }
+
+        // Проверка столкновений
+        function handleCollisions() {
+            // Пули против астероидов
+            for (let i = player.bullets.length - 1; i >= 0; i--) {
+                const bullet = player.bullets[i];
+                for (let j = asteroids.length - 1; j >= 0; j--) {
+                    const ast = asteroids[j];
+                    if (bullet.x > ast.x - ast.w/2 && bullet.x < ast.x + ast.w/2 &&
+                        bullet.y > ast.y - ast.h/2 && bullet.y < ast.y + ast.h/2) {
+                        // Попадание
+                        player.bullets.splice(i, 1);
+                        asteroids.splice(j, 1);
+                        score += 10;
+                        addExplosion(bullet.x, bullet.y, true);
+                        playExplosionSound();
+                        updateHUD();
+                        break; // пуля удалена
+                    }
+                }
+            }
+
+            // Астероиды против игрока
+            for (let i = asteroids.length - 1; i >= 0; i--) {
+                const ast = asteroids[i];
+                // Простая проверка пересечения прямоугольников
+                if (player.x < ast.x + ast.w/2 && player.x + player.w > ast.x - ast.w/2 &&
+                    player.y < ast.y + ast.h/2 && player.y + player.h > ast.y - ast.h/2) {
+                    // lose life
+                    asteroids.splice(i, 1);
+                    lives--;
+                    playLoseLifeSound();
+                    addExplosion(player.x + player.w/2, player.y + player.h/2, true);
+                    if (lives <= 0) {
+                        gameActive = false;
+                        finalScoreSpan.textContent = score;
+                        gameOverScreen.classList.add('active');
+                    } else {
+                        // Небольшая отдача
+                        player.x = Math.max(0, player.x - 40);
+                        player.y = Math.max(H/2, player.y - 20);
+                    }
+                    updateHUD();
+                    if (!gameActive) break;
+                }
+            }
+        }
+
+        // Обновление экрана
+        function update() {
+            if (!gameActive) return;
+
+            // Увеличение сложности с течением времени
+            gameTime += 0.05;
+            if (Math.random() < 0.02 + (gameTime * 0.001)) {
+                spawnAsteroid();
+            }
+
+            // Движение игрока
+            if (keys.left) player.x -= player.speed;
+            if (keys.right) player.x += player.speed;
+            if (keys.up) player.y -= player.speed;
+            if (keys.down) player.y += player.speed;
+
+            // Границы
+            player.x = Math.max(0, Math.min(W - player.w, player.x));
+            player.y = Math.max(0, Math.min(H - player.h, player.y));
+
+            // Стрельба
+            if (keys.space && player.cooldown <= 0) {
+                player.bullets.push({
+                    x: player.x + player.w/2,
+                    y: player.y,
+                    speed: -8
+                });
+                player.cooldown = player.maxCooldown;
+                playShootSound();
+            }
+            if (player.cooldown > 0) player.cooldown--;
+
+            // Пули
+            for (let i = player.bullets.length - 1; i >= 0; i--) {
+                player.bullets[i].y += player.bullets[i].speed;
+                if (player.bullets[i].y < -20) {
+                    player.bullets.splice(i, 1);
+                }
+            }
+
+            // Астероиды движение
+            for (let i = asteroids.length - 1; i >= 0; i--) {
+                const ast = asteroids[i];
+                ast.x += ast.speedX;
+                ast.y += ast.speedY;
+                ast.rotation += ast.rotSpeed;
+                // Убрать если улетел далеко за экран
+                if (ast.y > H + 100 || ast.x < -100 || ast.x > W + 100) {
+                    asteroids.splice(i, 1);
+                }
+            }
+
+            // Взрывы (частицы)
+            for (let i = explosions.length - 1; i >= 0; i--) {
+                const p = explosions[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.1; // гравитация
+                p.life -= 0.02;
+                p.vx *= 0.98;
+                p.vy *= 0.98;
+                if (p.life <= 0) {
+                    explosions.splice(i, 1);
+                }
+            }
+
+            handleCollisions();
+
+            // Движение звёзд (фон)
+            for (let s of stars) {
+                s.y += s.speed;
+                if (s.y > H) {
+                    s.y = -5;
+                    s.x = Math.random() * W;
+                }
+            }
+        }
+
+        // ---------- Отрисовка ----------
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+
+            // Звёзды
+            for (let s of stars) {
+                ctx.globalAlpha = s.alpha * 0.8;
+                ctx.fillStyle = `rgba(255, 255, 200, ${s.bright})`;
+                ctx.fillRect(s.x, s.y, s.size, s.size);
+            }
+            ctx.globalAlpha = 1.0;
+
+            // Игрок (корабль)
+            ctx.save();
+            ctx.shadowColor = '#00aaff';
+            ctx.shadowBlur = 15;
+            ctx.fillStyle = '#6ecfff';
+            ctx.beginPath();
+            ctx.moveTo(player.x + player.w/2, player.y);
+            ctx.lineTo(player.x + player.w - 5, player.y + player.h);
+            ctx.lineTo(player.x + 5, player.y + player.h);
+            ctx.closePath();
+            ctx.fillStyle = '#3a9bd9';
+            ctx.fill();
+            ctx.fillStyle = '#ffcc00';
+            ctx.beginPath();
+            ctx.arc(player.x + player.w/2, player.y + 10, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Пули
+            ctx.fillStyle = '#ffe066';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ffaa00';
+            for (let b of player.bullets) {
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.shadowBlur = 0;
+
+            // Астероиды
+            for (let ast of asteroids) {
+                ctx.save();
+                ctx.translate(ast.x, ast.y);
+                ctx.rotate(ast.rotation);
+                ctx.shadowColor = '#ff6644';
+                ctx.shadowBlur = 12;
+                ctx.fillStyle = '#7a4a3a';
+                ctx.beginPath();
+                ctx.rect(-ast.w/2, -ast.h/2, ast.w, ast.h);
+                ctx.fill();
+                ctx.fillStyle = '#553322';
+                ctx.beginPath();
+                ctx.rect(-ast.w/3, -ast.h/3, ast.w/2, ast.h/2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Взрывы
+            for (let p of explosions) {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            ctx.shadowBlur = 0;
+
+            // Если игра не активна, затемнить
+            if (!gameActive) {
+                ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                ctx.fillRect(0, 0, W, H);
+            }
+        }
+
+        // ---------- Игровой цикл ----------
+        function gameLoop() {
+            if (gameActive) {
+                update();
+            }
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ---------- Обработчики событий ----------
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a') { keys.left = true; e.preventDefault(); }
+            if (e.key === 'ArrowRight' || e.key === 'd') { keys.right = true; e.preventDefault(); }
+            if (e.key === 'ArrowUp' || e.key === 'w') { keys.up = true; e.preventDefault(); }
+            if (e.key === 'ArrowDown' || e.key === 's') { keys.down = true; e.preventDefault(); }
+            if (e.key === ' ') { keys.space = true; e.preventDefault(); initAudio(); }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a') { keys.left = false; e.preventDefault(); }
+            if (e.key === 'ArrowRight' || e.key === 'd') { keys.right = false; e.preventDefault(); }
+            if (e.key === 'ArrowUp' || e.key === 'w') { keys.up = false; e.preventDefault(); }
+            if (e.key === 'ArrowDown' || e.key === 's') { keys.down = false; e.preventDefault(); }
+            if (e.key === ' ') { keys.space = false; e.preventDefault(); }
+        });
+
+        // Рестарт
+        restartBtn.addEventListener('click', () => {
+            resetGame();
+            initAudio();
+        });
+
+        // Адаптивность (небольшое сглаживание)
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const w = container.clientWidth - 20;
+            if (w < 600) {
+                canvas.style.width = '100%';
+                canvas.style.height = 'auto';
+            } else {
+                canvas.style.width = '800px';
+                canvas.style.height = '500px';
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Старт игры
+        resetGame();
+        gameLoop();
+    })();
+</script>
+</body>
+</html>

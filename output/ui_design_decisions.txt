@@ -1,0 +1,65 @@
+UI DESIGN DECISIONS (Molecular AI Consensus)
+============================================================
+
+[0] UX_Researcher
+    **Element:** "Context Anchor" – a persistent, collapsible sidebar that displays the AI's current working file, active task, and last three decision points.
+
+**Behavior:** It updates in real-time as the AI progresses, and clicking any decision point reverts the workspace to that exact state, with a "fork" button to explore alternatives.
+
+**Why it improves UX:** It gives users a tangible mental model of the AI's reasoning trajectory, eliminating the "black box" anxiety and enabling quick course-correction without losing prior work.
+
+[1] UI_Designer
+    **Element: "Agent Intent Timeline"** — a horizontally scrollable, color-coded strip above the chat input showing each agent's current action (e.g., "Querying DB" in blue, "Drafting response" in amber) with a live progress bar and a subtle "step back" affordance on hover. This improves UX by making multi-agent work transparent and debuggable, reducing user anxiety about "who's doing what" and enabling instant course-correction without digging through logs.
+
+[2] Frontend_Dev
+    **Element:** Context-Aware Dependency Rail.
+
+**Behavior:** A vertical, collapsible Flexbox sidebar that dynamically lists only the live data models, API calls, or component states your current AI agent is actively consuming, with color-coded status (synced/stale/error). Clicking any item instantly scrolls and highlights the corresponding code block in the main editor, while a persistent “sync” icon shows the last successful handshake time.
+
+**Why it improves UX:** It eliminates the cognitive load of hunting through a sprawling file tree to verify what the AI is actually using, turning cross-agent collaboration into a visual, real-time dependency graph. This prevents silent integration failures and speeds up debugging by making the system’s mental model explicit and interactive.
+
+[3] Accessibility
+    **Element:** Focused Action Toolbar with Visible Keyboard Shortcuts.
+
+**Behavior:** On any AI-generated code block or suggestion, a sticky toolbar appears on keyboard focus (Tab) or hover, containing "Apply," "Copy," and "Diff View" buttons. Each button has a visible shortcut (e.g., `A`, `C`, `D`) and a 3:1 contrast ratio, with a clear focus ring that moves in logical order.
+
+**Why it improves UX:** It eliminates mouse dependency for power users, reduces cognitive load by making actions contextually discoverable, and ensures users with motor or vision impairments can act on AI output with the same speed and confidence as sighted mouse users.
+
+[4] Interaction <<< WINNER
+    **Element:** The "Intent Echo" tooltip.
+
+**Behavior:** As the user hovers over any AI-generated suggestion, a subtle, animated radial pulse emanates from the cursor, expanding into a translucent ring that displays the AI’s confidence score (e.g., 87%) and its source reasoning in a compact, dismissible chip.
+
+**Why it improves UX:** It transforms opaque AI output into a transparent, trust-building micro-interaction, letting users instantly gauge reliability without breaking flow or opening a modal, thereby reducing cognitive friction and decision paralysis.
+
+[5] Visual_Designer <<< WINNER
+    **Element:** "Context Drift Indicator" — a floating, frosted-glass pill tethered to the active AI agent’s avatar.  
+**Behavior:** It subtly shifts hue from cool blue to warm amber and displays a percentage (e.g., “62% aligned”) as the conversation diverges from the original task, with a one-click “Re-sync” button that snapshots the current context into a side panel.  
+**Why it improves UX:** It makes invisible cognitive misalignment tangible, preventing wasted iterations and giving users a graceful, non-blocking control point to steer the collaboration back on track without breaking flow.
+
+[6] Mobile_Dev
+    **Element:** Collapsible, swipe-to-dismiss “Context Dock” (bottom sheet on mobile, right sidebar on desktop).
+
+**Behavior:** On mobile, the dock slides up to reveal active AI agents, memory snippets, and pending approvals; a left-swipe closes it, and a 48px-tall grabber handle (≥44px touch target) toggles it. On desktop, it collapses to a 24px rail with icons, expanding on hover or tap.
+
+**Why it improves UX:** It keeps critical collaboration context one thumb-reach away without competing with the main chat canvas, reducing cognitive load during fast agent handoffs, and its responsive breakpoint (768px) ensures the sidebar never blocks content on small screens.
+
+[7] Performance <<< WINNER
+    **Element:** "Context Trail" – a horizontally scrollable, CSS-only timeline strip above the chat input.  
+**Behavior:** Recent AI actions (file edits, tool calls) appear as glowing, spring-animated chips that auto-archieve into a collapsible sidebar after 10s, using `content-visibility: auto` for zero main-thread cost.  
+**Why it improves UX:** Users instantly see AI’s reasoning chain without interrupting flow, while the lazy-loaded history prevents layout thrash and keeps interaction at 60fps even on low-end devices.
+
+[8] Security_UI
+    **Element:** "Delegation Shield" — a persistent, collapsible permission badge attached to any AI agent's chat header.
+
+**Behavior:** The badge shows a live, one-click summary of the agent's current access scope (e.g., "Read: Repo A | Write: Drafts"). Clicking it instantly opens a modal with granular toggles and a "Revoke All" panic button, without leaving the conversation.
+
+**Why it improves UX:** It makes security a *visible, interactive state* rather than buried in settings, letting users audit and adjust trust mid-task with zero friction—reducing anxiety and preventing accidental over-permissioning.
+
+[9] Content
+    **Element:** The "Shared Context Meter" (SCM).
+
+**Behavior:** A persistent, thin status bar above the chat input that visualizes the AI’s current understanding of the active project (files, conversation history, user intent) as a percentage (e.g., 78%). It updates in real-time as you type, reference files, or switch tasks, and clicking it expands a dropdown showing which specific data points are missing or ambiguous.
+
+**Why it improves UX:** It transforms the AI's opaque "black box" state into a transparent, actionable gauge, letting users preemptively fill knowledge gaps before sending a prompt—reducing failed responses and the frustration of "I already told you that."
+

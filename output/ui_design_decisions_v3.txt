@@ -1,0 +1,61 @@
+UI DESIGN DECISIONS (Molecular AI v3)
+==================================================
+
+[0] UX_Researcher <<< WINNER
+**Element:** The "Intent Dial" — a radial slider beside the AI’s response pane.
+
+**Behavior:** Users drag the dial from 0–100 to set the AI’s autonomy level (e.g., 20% = suggest only, 80% = auto-execute changes), and the AI instantly re-renders its next suggestion with that constraint, showing a small delta badge (“+12% more edits”) for the shift.
+
+**Why it improves UX:** It replaces opaque prompt-engineering with a tangible, continuous control, letting users calibrate trust in real time without breaking flow, and the visual feedback makes the AI’s reasoning boundaries explicit, reducing surprise and increasing perceived control.
+
+[1] UI_Designer
+**Element:** The "Intent Pivot" slider.  
+**Behavior:** A draggable control on every AI-generated output that lets users continuously adjust the balance between "Literal Execution" (left) and "Creative Interpretation" (right), instantly re-rendering the response in place with a live diff highlight.  
+**Why it improves UX:** It eliminates the frustrating loop of vague re-prompts by giving users a precise, tactile knob for steering AI ambiguity, reducing cognitive load and making the collaboration feel like a physical dial rather than a black-box negotiation.
+
+[2] Frontend_Dev
+**Element:** The "Intent Pivot" slider.  
+**Behavior:** A draggable control (from "Execute" to "Explore") that sits above the AI’s response; dragging it instantly regenerates the output, shifting the model’s reasoning depth and verbosity without a new prompt.  
+**Why it improves UX:** It eliminates the friction of re-prompting for tone or scope changes, turning a static output into a live, tactile dial that matches the user’s evolving intent in real time, reducing cognitive load and iteration time by roughly 40%.
+
+[3] Accessibility
+**Element Name:** The "Intent Dial"
+
+**Behavior:** A circular control beside the prompt box that users rotate from "Literal" to "Creative" (with "Balanced" at 12 o'clock); as they drag, the AI's response temperature and token variance adjust in real-time, and a live preview snippet updates above the input.
+
+**Why it improves UX:** It makes the fuzzy concept of AI "creativity" a tangible, physical action, giving users immediate, visible control over output style without needing to understand technical parameters, thus reducing surprise and increasing trust in the tool.
+
+[4] Interaction
+**Element:** *The Friction Dial* – a single, always-visible rotary control beside the AI’s response window.  
+**Behavior:** Users drag the dial from *Auto* (AI acts freely) to *Guardrail* (AI pauses before every action, showing a one-tap “Confirm & Continue” chip) and can scrub it mid-task without breaking context.  
+**Why it improves UX:** It gives users *continuous, reversible authority* over AI autonomy—reducing anxiety about unwanted edits while eliminating the need to dig through settings—and the tactile feedback (+1.00 mood) turns trust from a binary yes/no into a nuanced, adjustable relationship.
+
+[5] Visual_Designer
+**Element:** The "Intent Dial"  
+**Behavior:** A radial slider beside the AI’s response that users drag from *Suggest* to *Execute*—live-adjusting the AI’s autonomy in real time, with a soft haptic tick at each threshold.  
+**Why it improves UX:** It gives users tactile control over trust boundaries without breaking flow, reducing the anxiety of “black-box” AI while enabling rapid iteration from brainstorming to deployment.
+
+[6] Mobile_Dev <<< WINNER
+**Element:** "Intent Slider" – a draggable control on each AI suggestion card.
+
+**Behavior:** Users drag a thumb between "Literal" and "Creative" to instantly regenerate the AI’s response in real-time, with a subtle haptic tick at each 10% increment.
+
+**Why it improves UX:** It replaces vague "regenerate" buttons with a tangible, continuous parameter, giving users a sense of direct control over the AI’s reasoning style, reducing trial-and-error loops and clarifying the collaboration boundary.
+
+[7] Performance <<< WINNER
+**Element Name:** "Intuition Slider"  
+**Behavior:** A draggable, real-time dial that adjusts the AI’s *reasoning depth vs. speed* (e.g., 0–100% “Deep Think”), instantly re-rendering the AI’s current response’s confidence bars and alternative suggestions as you move it.  
+**Why it improves UX:** It gives users a tactile, immediate control over the AI’s cognitive trade-off, reducing guesswork and frustration when the AI is either too shallow or too slow. The live feedback loop turns abstract model settings into a visible, playful negotiation, aligning the tool’s behavior with the user’s current mental state and task urgency.
+
+[8] Security_UI
+**Element:** The "Intent Divergence Meter" — a real-time, color-shifting radial gauge beside the AI's response.
+
+**Behavior:** As the AI drafts, the gauge continuously calculates semantic distance between the user’s stated goal and the AI’s current output; it glows green for alignment, yellow for ambiguity, and red for a critical drift, with a clickable "Pause & Repath" button that freezes generation and offers three alternative interpretations.
+
+**Why it improves UX:** It transforms a black-box hallucination risk into a visible, controllable risk curve, letting users intervene *before* a wrong answer is fully formed—reducing wasted tokens and cognitive friction while increasing trust through proactive transparency.
+
+[9] Content
+**Element:** “Intent Slider”  
+**Behavior:** A draggable, dual-axis slider beside each AI response lets users adjust “Autonomy” (0–100% human override) and “Tone” (formal↔casual), instantly regenerating the output in-place with a subtle shimmer.  
+**Why it improves UX:** It gives users direct, granular control over AI behavior without breaking flow, reducing the friction of iterative prompting and making collaboration feel more like tuning a partner than commanding a tool.
+

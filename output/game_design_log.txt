@@ -1,0 +1,143 @@
+ORBITAL SYMPHONY - GAME DESIGN LOG
+==================================================
+
+PLATFORM CAPABILITIES DEMONSTRATED:
+- Kuramoto Synchronization: Particle phase alignment
+- Multi-Agent Consensus: Harmonic note selection
+- SensorFusion: Confidence-based glow effects
+- ConvergenceRegime: LINEAR/CRITICAL/DIVERGENT modes
+- Live LLM: Generated creative mechanics
+
+TOP 4 MECHANICS (Orbital Consensus):
+----------------------------------------
+#1 AI_Director (mood=-0.11)
+**Mechanic Name:** Harmonic Gravitational Lensing
+
+**How It Works:** Each particle orbits a central "conductor" planet, but instead of moving in fixed circles, their paths are distorted by a dynamic gravity well whose shape you control by drawing a short-lived "resonance curve" across the screen. As particles pass through this curve, they bend toward or away from the conductor, shifting their orbital phase and pitch; to complete a puzzle, you must reshape the lens repeatedly until all particles converge on a single, precisely timed harmonic interval (e.g., a perfect fifth) at the same moment. The catch: the lens decays after each use, so every adjustment is a trade-off between correcting one particle's orbit and destabilizing another's.
+
+**Why It's Fun:** It turns synchronization into a physical, spatial puzzle—you're not just tapping to a beat, you're sculpting spacetime to herd chaotic orbits into unity, creating a satisfying "click" of cognitive and auditory clarity when chaos resolves into a chord.
+
+**Synchronization/Consensus Demonstration:** The mechanic literalizes consensus as a gravitational negotiation: each particle "votes" with its orbital velocity, and your lens is the deliberative process that mediates their competing pulls, requiring you to balance individual needs (pitch, speed) against the collective goal of a single harmonic moment, mirroring how real systems achieve consensus through iterative compromise.
+
+#2 Game_Mechanic (mood=-0.01)
+MECHANIC: **Resonant Slingshot**
+Players tap a particle to launch it into an elliptical orbit, but its path must cross the "harmonic nodes" (glowing points where other particles' orbits intersect) in the exact rhythm of the current chord. Each successful node-crossing adds a layer to the evolving harmony, while a missed beat causes that particle to decelerate, pulling the whole system slightly off-beat until the player re-syncs it with a counter-tap. This forces a constant, tactile negotiation between individual particle momentum and the group's shared pulse—you can't just play your own melody; you must read and adjust to the collective wobble, making harmony a live, fragile consensus that you steer with micro-timing.
+
+#3 Sound_Engineer (mood=+1.00)
+**Mechanic Name:** Harmonic Drift-Correction
+
+**How it works:** Each particle orbits on a slightly elliptical path, and its musical pitch is determined by its angular velocity. Players must continuously nudge the particle’s perihelion (closest point) to match the "master metronome" ring—if the particle’s position drifts ahead or behind, its tone goes dissonant and its orbit wobbles. Synchronization is achieved by applying timed micro-impulses that adjust the ellipse's eccentricity, not just the speed, forcing players to correct both phase and shape simultaneously.
+
+**Why it’s fun:** It turns a simple timing puzzle into a spatial juggling act—your attention splits between melodic feedback and visual trajectory, creating a satisfying "tightrope" tension. Success feels like conducting a chaotic solar system into a calm, unified chorus.
+
+**Consensus demonstration:** The mechanic embodies consensus because multiple particles must agree on a shared temporal grid, and each correction you make is a negotiation between the particle’s inertial "opinion" and the metronome's authority. True harmony only emerges when all particles converge on the same orbital phase and eccentricity—a visible, audible consensus where no single particle dominates, but all align to a collective pulse.
+
+#4 Performance_Expert (mood=+1.00)
+**Mechanic Name:** Harmonic Resonance Lock  
+
+**How it works:** Each particle orbits a central core with a unique orbital frequency (e.g., 2×, 3×, 5× the base tempo). Players tap to emit a “pulse” that nudges a particle’s phase slightly, but only when two or more particles’ pulses align on the same beat do they “lock” together, creating a resonant chord and raising the Harmony Meter. If the meter reaches 100%, the core bursts into full color; if a particle drifts more than 30° off its target phase, it destabilizes and forces the player to re-sync all locked particles via a quick-time “counter-pulse” chain.  
+
+**Why it’s fun:** It’s a spatial-timing puzzle that rewards precision over speed—players must mentally juggle multiple orbits, feel the polyrhythmic tension, and experience the “aha” of aligning disparate cycles into a single, euphoric chord. The lock/unlock mechanic creates a satisfying push-pull: you feel like a conductor mid-chaos, not a button-masher.  
+
+**Sync/consensus demonstration:** The mechanic literalizes consensus—each particle has its own “opinion” (phase), and harmony only occurs when they voluntarily surrender their individuality to a shared beat, but the player must negotiate that surrender through gentle nudges, not force. The Harmony Meter is a real-time gauge of collective agreement, rising only when all parts contribute equally, and crashing if any voice dominates or lags.
+
+ALL GENERATED MECHANICS:
+----------------------------------------
+[0] Rhythm_Master
+  **Mechanic Name:** Harmonic Gravitational Lock
+
+**How it works:** Players adjust the elliptical orbits of individual particles by dragging their focal points, while the game overlays a live "interference wave" showing where the particles' frequency peaks align. When three or more particles achieve a steady-state resonance (their combined waveform peaks within a 5% tolerance window for two full rotations), they "lock" into a shared orbital path, unlocking a new chord layer. Mismatched orbits cause visual dissonance—the screen desaturates and the music shifts to minor-key drones—until the player finds the consensus geometry.
+
+**Why it’s fun:** The mechanic turns abstract physics into a tactile, audiovisual feedback loop where every tiny adjustment feels like tuning a living instrument. The "lock" moment is a euphoric payoff, rewarding patience and pattern recognition rather than twitch reflexes.
+
+**Sync/consensus demonstration:** This forces players to negotiate between individual particle preferences (their natural orbital eccentricity) and the group’s need for a shared tempo and phase—a literal, spatial metaphor for building consensus through compromise and timing.
+
+[1] Melody_Architect
+  **Mechanic Name:** Harmonic Resonance Lock
+
+**How It Works:** Each particle orbits a central core on its own elliptical path, emitting a tone that rises or falls in pitch based on its angular velocity and distance from the core. Players must tap and hold to apply "gravity wells" that pull or push particles, adjusting their orbital phase until all particles cross the same radial axis at the exact same moment, triggering a resonant chord and unlocking the next section. The catch: pulling one particle shifts the gravitational balance, causing others to drift—so players must iteratively nudge, listen, and re-sync in a loop of trial-and-error.
+
+**Why It's Fun:** The audio feedback turns abstract math into an intuitive ear-training dance—you *feel* the dissonance before you see it, and the "aha" moment when chaos clicks into a single shimmering pulse is deeply satisfying. It rewards patience and pattern recognition, not twitch reflexes.
+
+**Synchronization/Consensus:** The mechanic forces players to treat each particle as a voting member of a system—no single particle can be forced into place; instead, the player must negotiate a shared orbital rhythm where every element concedes slightly to achieve a collective pulse, mirroring how consensus emerges from mutual adjustment rather than domination.
+
+[2] Harmony_Expert
+  **Mechanic Name:** Phase-Lock Cascade
+
+**How it works:** Particles orbit a central core in elliptical paths, each emitting a tone when crossing its apogee. Players must tap to apply a "gravity pulse" that nudges a particle's orbital speed, but the pulse also *reverberates* to the two nearest particles, slightly delaying their next tone. By timing pulses precisely, you align all particles' apogee crossings into a single repeating chord—but each correction risks destabilizing the cascade into a dissonant shriek.
+
+**Why it's fun:** It's a kinetic ear-training puzzle where you *feel* the rhythm in your fingers, not just hear it. The cascading delay creates a pleasing "domino" tension, rewarding micro-adjustments with a slowly blooming harmonic texture, and the moment of perfect sync triggers a satisfying visual shockwave that re-orbits the entire system.
+
+**Sync/consensus demonstration:** The mechanic embodies consensus because you aren't forcing one particle to match a fixed beat—you're coercing a *mutual* compromise where each particle's phase shift is influenced by its neighbors. The "perfect chord" only emerges when the entire system self-organizes into a shared temporal agreement, mirroring how real-world consensus requires nudging, feedback, and tolerance for iterative correction.
+
+[3] Puzzle_Designer
+  **Mechanic Name:** Harmonic Tidal Locking  
+
+**How it works:** Particles orbit a central core with invisible resonance rings, and players must time their taps to align each particle’s nearest ring with the core’s pulsing beat—but every successful lock *shifts* the core’s tempo slightly toward the average of all locked particles, creating a live consensus rhythm. If more than two particles fall out of sync, the combined dissonance physically distorts the orbit paths, forcing players to re-stabilize by matching the *majority* pulse rather than their own.
+
+**Why it’s fun:** It’s a tense, tactile negotiation between individual timing and group drift—you feel the music *change* because of your choices, and the rare moment when all particles lock into a single, shifting beat creates a euphoric “we built this together” release. The distortion penalty adds risk without punishment, turning mistakes into visual chaos you can fix through cooperative listening.
+
+**Demonstrates synchronization:** Every tap is a vote; the core’s tempo becomes a weighted average of all active players’ inputs, and the only way to win is to abandon perfect personal rhythm in favor of a *shared* pulse—true synchronization through mutual adjustment, not conformity.
+
+[4] UI_Artist
+  **Mechanic Name:** Harmonic Tether
+
+**How it works:** Players drag a "conductor" particle along a circular path, emitting a gravitational pulse that pulls nearby orbiting particles into its rhythm. Each particle has a unique orbital frequency, and the player must time their pulse to align all particles into a single, synchronized orbit, visualized as a glowing, unified ring. If a particle drifts out of sync, it dims and fractures, requiring the player to re-establish the tether before the harmony collapses.
+
+**Why it's fun:** It transforms abstract timing into a tactile, physical push-and-pull—you're not just matching beats, you're wrestling with gravity. The tension of holding multiple fragile tethers simultaneously creates a flow-state challenge, rewarding both micro-adjustments and macro-pattern recognition.
+
+**Sync/Consensus demonstration:** The mechanic embodies consensus as a negotiated compromise—each particle "votes" with its frequency, and the player must coax them toward a shared tempo without forcing a single dominant beat. True harmony only emerges when every particle willingly converges on the tether, representing a decentralized agreement where the whole is greater than the sum of its parts.
+
+[5] Game_Mechanic
+  MECHANIC: **Resonant Slingshot**
+Players tap a particle to launch it into an elliptical orbit, but its path must cross the "harmonic nodes" (glowing points where other particles' orbits intersect) in the exact rhythm of the current chord. Each successful node-crossing adds a layer to the evolving harmony, while a missed beat causes that particle to decelerate, pulling the whole system slightly off-beat until the player re-syncs it with a counter-tap. This forces a constant, tactile negotiation between individual particle momentum and the group's shared pulse—you can't just play your own melody; you must read and adjust to the collective wobble, making harmony a live, fragile consensus that you steer with micro-timing.
+
+[6] Sound_Engineer
+  **Mechanic Name:** Harmonic Drift-Correction
+
+**How it works:** Each particle orbits on a slightly elliptical path, and its musical pitch is determined by its angular velocity. Players must continuously nudge the particle’s perihelion (closest point) to match the "master metronome" ring—if the particle’s position drifts ahead or behind, its tone goes dissonant and its orbit wobbles. Synchronization is achieved by applying timed micro-impulses that adjust the ellipse's eccentricity, not just the speed, forcing players to correct both phase and shape simultaneously.
+
+**Why it’s fun:** It turns a simple timing puzzle into a spatial juggling act—your attention splits between melodic feedback and visual trajectory, creating a satisfying "tightrope" tension. Success feels like conducting a chaotic solar system into a calm, unified chorus.
+
+**Consensus demonstration:** The mechanic embodies consensus because multiple particles must agree on a shared temporal grid, and each correction you make is a negotiation between the particle’s inertial "opinion" and the metronome's authority. True harmony only emerges when all particles converge on the same orbital phase and eccentricity—a visible, audible consensus where no single particle dominates, but all align to a collective pulse.
+
+[7] AI_Director
+  **Mechanic Name:** Harmonic Gravitational Lensing
+
+**How It Works:** Each particle orbits a central "conductor" planet, but instead of moving in fixed circles, their paths are distorted by a dynamic gravity well whose shape you control by drawing a short-lived "resonance curve" across the screen. As particles pass through this curve, they bend toward or away from the conductor, shifting their orbital phase and pitch; to complete a puzzle, you must reshape the lens repeatedly until all particles converge on a single, precisely timed harmonic interval (e.g., a perfect fifth) at the same moment. The catch: the lens decays after each use, so every adjustment is a trade-off between correcting one particle's orbit and destabilizing another's.
+
+**Why It's Fun:** It turns synchronization into a physical, spatial puzzle—you're not just tapping to a beat, you're sculpting spacetime to herd chaotic orbits into unity, creating a satisfying "click" of cognitive and auditory clarity when chaos resolves into a chord.
+
+**Synchronization/Consensus Demonstration:** The mechanic literalizes consensus as a gravitational negotiation: each particle "votes" with its orbital velocity, and your lens is the deliberative process that mediates their competing pulls, requiring you to balance individual needs (pitch, speed) against the collective goal of a single harmonic moment, mirroring how real systems achieve consensus through iterative compromise.
+
+[8] Storyteller
+  **Mechanic Name:** Harmonic Orbit Lock
+
+**How it works:** Players manipulate elliptical orbit paths around a central core, adjusting the eccentricity and angular momentum of each particle so that its "apogee flash" (a musical note that triggers at the farthest point of its swing) lands exactly on the beat of the continuously shifting time signature. To achieve harmony, the player must not only match each particle’s period to the tempo but also rotate the entire orbital plane of the system—creating a *consensus of phase* where all particles cross their shared nodal line simultaneously, producing a chord. If even one particle drifts out of synchronization, the chord breaks into dissonant micro-tones that physically warp the orbit of the nearest particle, creating a feedback loop of chaos.
+
+**Why it's fun:** It turns abstract mathematics into a tactile, physical dance—you’re not just tapping a rhythm, you’re sculpting gravity itself to make the universe agree on a beat. The moment when three wildly different ellipses finally lock into a single, resonant triad feels like solving a cosmic jigsaw puzzle with your ears.
+
+**Synchronization/consensus demonstration:** The mechanic forces a *negotiated truth*—no particle is "correct" alone; all must converge on a shared phase and orbital frequency, where the consensus emerges from the player’s spatial adjustments, not from a pre-set grid. It’s a literal demonstration of how separate, autonomous entities (particles) must surrender individual eccentricities to achieve a collective, stable harmony—a metaphor for social consensus built through continuous, mutual adjustment.
+
+[9] Performance_Expert
+  **Mechanic Name:** Harmonic Resonance Lock  
+
+**How it works:** Each particle orbits a central core with a unique orbital frequency (e.g., 2×, 3×, 5× the base tempo). Players tap to emit a “pulse” that nudges a particle’s phase slightly, but only when two or more particles’ pulses align on the same beat do they “lock” together, creating a resonant chord and raising the Harmony Meter. If the meter reaches 100%, the core bursts into full color; if a particle drifts more than 30° off its target phase, it destabilizes and forces the player to re-sync all locked particles via a quick-time “counter-pulse” chain.  
+
+**Why it’s fun:** It’s a spatial-timing puzzle that rewards precision over speed—players must mentally juggle multiple orbits, feel the polyrhythmic tension, and experience the “aha” of aligning disparate cycles into a single, euphoric chord. The lock/unlock mechanic creates a satisfying push-pull: you feel like a conductor mid-chaos, not a button-masher.  
+
+**Sync/consensus demonstration:** The mechanic literalizes consensus—each particle has its own “opinion” (phase), and harmony only occurs when they voluntarily surrender their individuality to a shared beat, but the player must negotiate that surrender through gentle nudges, not force. The Harmony Meter is a real-time gauge of collective agreement, rising only when all parts contribute equally, and crashing if any voice dominates or lags.
+
+ORBITAL SYNCHRONIZATION DATA:
+----------------------------------------
+Final sync r: 0.695
+Number of agents: 10
+Warm-up steps: 800
+Divergent steps: 200
+
+2026 GAME TRENDS INCORPORATED:
+- Immersive audio-visual experience
+- AI-generated content
+- Adaptive difficulty
+- Social/competitive elements
+- Beautiful visual design

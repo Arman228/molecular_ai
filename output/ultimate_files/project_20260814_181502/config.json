@@ -1,0 +1,19 @@
+{
+    "redis": {
+        "host": "localhost",
+        "port": 6379,
+        "db": 0
+    },
+    "websocket": {
+        "host": "localhost",
+        "port": 8765
+    },
+    "rate_limit": {
+        "max_requests": 100,
+        "window_seconds": 60
+    },
+    "files": {
+        "input_dir": "./data/input",
+        "output_dir": "./data/output"
+    }
+}

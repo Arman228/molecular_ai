@@ -1,0 +1,438 @@
+"""
+HTML Игра "Ниндзя-бегун"
+Полноценная игра с препятствиями, прыжками и подсчетом очков.
+Запустите файл и откройте в браузере.
+"""
+
+import html
+import random
+import webbrowser
+import os
+import threading
+import time
+import http.server
+import socketserver
+
+# ==================== Генерация HTML-игры ====================
+
+HTML_GAME = r"""<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ниндзя-бегун | Игра</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #game-container {
+            background: linear-gradient(180deg, #16213e 0%, #0f3460 100%);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+            position: relative;
+        }
+        canvas {
+            display: block;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #4a90d9 0%, #87ceeb 40%, #98fb98 40%, #2d5016 100%);
+            cursor: pointer;
+        }
+        #ui {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            color: #e0e0e0;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        #score {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 20px;
+            border-radius: 30px;
+            border: 2px solid #e94560;
+            color: #e94560;
+        }
+        #restart-btn {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #restart-btn:hover {
+            background: #ff6b6b;
+            transform: scale(1.05);
+        }
+        #controls-info {
+            text-align: center;
+            padding: 10px;
+            color: #a0a0b0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game" width="800" height="400"></canvas>
+        <div id="ui">
+            <div id="score">Очки: 0</div>
+            <button id="restart-btn">🔄 Заново</button>
+        </div>
+        <div id="controls-info">
+            Пробел / Клик / Тап — прыжок | Избегайте препятствий!
+        </div>
+    </div>
+
+    <script>
+        // ====== Инициализация ======
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const restartBtn = document.getElementById('restart-btn');
+
+        const GAME_WIDTH = 800;
+        const GAME_HEIGHT = 400;
+        const GROUND_Y = 320;
+        const GRAVITY = 0.6;
+        const JUMP_FORCE = -13;
+        const PLAYER_SIZE = 40;
+
+        // ====== Состояние игры ======
+        let gameRunning = false;
+        let score = 0;
+        let gameSpeed = 5;
+        let frame = 0;
+
+        // ====== Игрок (ниндзя) ======
+        const player = {
+            x: 80,
+            y: GROUND_Y - PLAYER_SIZE,
+            width: PLAYER_SIZE,
+            height: PLAYER_SIZE,
+            vy: 0,
+            isJumping: false,
+            animFrame: 0,
+            // Параметры для отрисовки ниндзя
+            color: '#e94560',
+            eyeColor: '#ffffff'
+        };
+
+        // ====== Препятствия ======
+        let obstacles = [];
+        let spawnTimer = 0;
+
+        // ====== Управление ======
+        function jump() {
+            if (!gameRunning) startGame();
+            if (!player.isJumping) {
+                player.vy = JUMP_FORCE;
+                player.isJumping = true;
+            }
+        }
+
+        // События управления
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                jump();
+            }
+        });
+        canvas.addEventListener('click', jump);
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            jump();
+        });
+
+        // ====== Игровой цикл ======
+        function update() {
+            if (!gameRunning) return;
+
+            // Обновление игрока
+            player.vy += GRAVITY;
+            player.y += player.vy;
+
+            // Земля
+            if (player.y >= GROUND_Y - PLAYER_SIZE) {
+                player.y = GROUND_Y - PLAYER_SIZE;
+                player.vy = 0;
+                player.isJumping = false;
+            }
+
+            // Анимация ниндзя
+            player.animFrame = (player.animFrame + 1) % 20;
+
+            // Спавн препятствий
+            spawnTimer++;
+            if (spawnTimer > 90 - gameSpeed * 8) {
+                spawnTimer = 0;
+                if (Math.random() < 0.6) {
+                    const type = Math.random();
+                    obstacles.push({
+                        x: GAME_WIDTH + 50,
+                        y: GROUND_Y - 30,
+                        width: 30,
+                        height: 30,
+                        type: type < 0.5 ? 'box' : 'spike'
+                    });
+                }
+            }
+
+            // Движение препятствий
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                obs.x -= gameSpeed;
+
+                // Проверка столкновения
+                if (checkCollision(player, obs)) {
+                    endGame();
+                    return;
+                }
+
+                // Удаление за экраном
+                if (obs.x < -50) {
+                    obstacles.splice(i, 1);
+                    score += 10;
+                }
+            }
+
+            // Увеличение сложности
+            score++;
+            gameSpeed = 5 + Math.floor(score / 200);
+
+            // Обновление UI
+            scoreEl.textContent = `Очки: ${Math.floor(score / 10)}`;
+        }
+
+        function checkCollision(player, obs) {
+            return (
+                player.x < obs.x + obs.width &&
+                player.x + player.width > obs.x &&
+                player.y < obs.y + obs.height &&
+                player.y + player.height > obs.y
+            );
+        }
+
+        // ====== Отрисовка ======
+        function draw() {
+            // Небо
+            ctx.fillStyle = '#4a90d9';
+            ctx.fillRect(0, 0, GAME_WIDTH, GROUND_Y);
+            ctx.fillStyle = '#87ceeb';
+            ctx.fillRect(0, 0, GAME_WIDTH, GROUND_Y - 100);
+
+            // Облака
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            for (let i = 0; i < 5; i++) {
+                const cloudX = (frame * 0.5 + i * 180) % (GAME_WIDTH + 200) - 100;
+                const cloudY = 40 + i * 25;
+                ctx.beginPath();
+                ctx.arc(cloudX, cloudY, 25, 0, Math.PI * 2);
+                ctx.arc(cloudX + 25, cloudY - 10, 20, 0, Math.PI * 2);
+                ctx.arc(cloudX + 50, cloudY, 25, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Земля
+            ctx.fillStyle = '#2d5016';
+            ctx.fillRect(0, GROUND_Y, GAME_WIDTH, GAME_HEIGHT - GROUND_Y);
+            ctx.fillStyle = '#3a6b1e';
+            ctx.fillRect(0, GROUND_Y, GAME_WIDTH, 10);
+
+            // Трава
+            ctx.fillStyle = '#4a8f2a';
+            for (let i = 0; i < 20; i++) {
+                const grassX = (i * 45 + frame) % (GAME_WIDTH + 50) - 25;
+                ctx.fillRect(grassX, GROUND_Y - 5, 5, 10);
+            }
+
+            // Препятствия
+            obstacles.forEach(obs => {
+                if (obs.type === 'box') {
+                    ctx.fillStyle = '#8b4513';
+                    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                    ctx.strokeStyle = '#654321';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
+                } else {
+                    // Шип
+                    ctx.fillStyle = '#dc143c';
+                    ctx.beginPath();
+                    ctx.moveTo(obs.x + obs.width / 2, obs.y);
+                    ctx.lineTo(obs.x, obs.y + obs.height);
+                    ctx.lineTo(obs.x + obs.width, obs.y + obs.height);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            });
+
+            // Игрок (ниндзя)
+            drawNinja(player.x, player.y, player.width, player.height, player.animFrame);
+
+            // Черный пояс
+            ctx.fillStyle = '#000';
+            ctx.fillRect(player.x + player.width / 2 - 3, player.y + player.height / 2 - 5, 6, 10);
+        }
+
+        function drawNinja(x, y, w, h, anim) {
+            // Тень
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.beginPath();
+            ctx.ellipse(x + w/2, GROUND_Y + 5, w/2, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Тело
+            ctx.fillStyle = '#2c2c2c';
+            ctx.fillRect(x + 5, y + 8, w - 10, h - 15);
+
+            // Голова
+            ctx.fillStyle = '#3a3a3a';
+            ctx.beginPath();
+            ctx.arc(x + w/2, y + 10, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Глаза (белые)
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(x + w/2 - 5, y + 9, 3, 0, Math.PI * 2);
+            ctx.arc(x + w/2 + 5, y + 9, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Зрачки
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(x + w/2 - 5 + (anim % 2), y + 9, 1.5, 0, Math.PI * 2);
+            ctx.arc(x + w/2 + 5 + (anim % 2), y + 9, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Бандана (красная)
+            ctx.fillStyle = '#e94560';
+            ctx.fillRect(x + w/2 - 14, y + 3, 28, 4);
+            ctx.fillRect(x + w/2 + 10, y + 3, 8, 3);
+
+            // Руки (анимация бега)
+            const armOffset = Math.sin(anim * 0.5) * 5;
+            ctx.fillStyle = '#2c2c2c';
+            ctx.fillRect(x + 2, y + 12 + armOffset, 5, 15);
+            ctx.fillRect(x + w - 7, y + 12 - armOffset, 5, 15);
+
+            // Ноги (бег)
+            const legOffset = Math.sin(anim * 0.5) * 8;
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(x + 6, y + h - 10 + legOffset, 6, 10);
+            ctx.fillRect(x + w - 12, y + h - 10 - legOffset, 6, 10);
+        }
+
+        // ====== Управление игрой ======
+        function startGame() {
+            gameRunning = true;
+            score = 0;
+            obstacles = [];
+            gameSpeed = 5;
+            player.y = GROUND_Y - PLAYER_SIZE;
+            player.vy = 0;
+            player.isJumping = false;
+            spawnTimer = 0;
+        }
+
+        function endGame() {
+            gameRunning = false;
+            scoreEl.textContent = `Игра окончена! Очки: ${Math.floor(score / 10)}`;
+        }
+
+        restartBtn.addEventListener('click', () => {
+            startGame();
+        });
+
+        // ====== Главный цикл ======
+        function gameLoop() {
+            frame++;
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Начинаем
+        startGame();
+        gameLoop();
+    </script>
+</body>
+</html>
+"""
+
+# ==================== Запуск игры ====================
+
+def run_game():
+    """Запускает HTML-игру в браузере через локальный сервер."""
+    
+    # Создаем временную директорию для игры
+    game_dir = os.path.join(os.getcwd(), "ninja_game")
+    os.makedirs(game_dir, exist_ok=True)
+    
+    # Сохраняем HTML файл
+    html_path = os.path.join(game_dir, "index.html")
+    with open(html_path, "w", encoding=" "utf-8") as f:
+        f.write(HTML_GAME)
+    
+    print(f"✅ Игра сохранена: {html_path}")
+    
+    # Запускаем локальный сервер
+    PORT = 8000
+    
+    # Меняем директорию на папку с игрой
+    os.chdir(game_dir)
+    
+    # Создаем HTTP сервер
+    handler = http.server.SimpleHTTPRequestHandler
+    
+    # Запускаем сервер в отдельном потоке
+    class ServerThread(threading.Thread):
+        def run(self):
+            with socketserver.TCPServer(("", PORT), handler) as httpd:
+                print(f"🌐 Сервер запущен на порту {PORT}")
+                httpd.serve_forever()
+    
+    # Запускаем поток сервера
+    server_thread = ServerThread(daemon=True)
+    server_thread.start()
+    
+    # Открываем браузер
+    url = f"http://localhost:{PORT}"
+    print(f"🚀 Открываю игру в браузере: {url}")
+    webbrowser.open(url)
+    
+    # Ждем немного для стабильности
+    time.sleep(2)
+    
+    print("\n🎮 Игра запущена! Используйте:")
+    print("   - Пробел / Клик / Тап — прыжок")
+    print("   - Избегайте препятствий")
+    print("   - Наберите максимальное количество очков!")
+    print("\nНажмите Ctrl+C для остановки сервера.\n")
+    
+    # Держим программу активной
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n👋 Сервер остановлен. До свидания!")
+
+# ==================== Запуск ====================
+
+if __name__ == "__main__":
+    run_game()

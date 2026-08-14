@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Эпоха Империй · 4X стратегия</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+    }
+    body {
+      background: #0a0f1e;
+      font-family: 'Segoe UI', system-ui, monospace;
+      color: #e0e6f0;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+    }
+    /* верхняя панель */
+    .top-bar {
+      height: 48px;
+      background: #1a1f2e;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 10px;
+      border-bottom: 2px solid #3a4a6a;
+      flex-shrink: 0;
+      z-index: 20;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.6);
+    }
+    .top-bar .empire-title {
+      font-weight: 700;
+      font-size: 1.4rem;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #ffd700, #ffb347);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-right: 8px;
+    }
+    .resource-panel {
+      display: flex;
+      gap: 12px;
+      background: #0e1420;
+      padding: 4px 12px;
+      border-radius: 30px;
+      border: 1px solid #3e506a;
+    }
+    .res-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.9rem;
+    }
+    .res-icon {
+      font-size: 1.2rem;
+    }
+    .turn-btn {
+      background: #2d3f5e;
+      border: none;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-left: auto;
+      border: 1px solid #5b7bb4;
+    }
+    .turn-btn:hover {
+      background: #3f5a85;
+      transform: scale(1.02);
+    }
+    .ui-panel {
+      display: flex;
+      gap: 4px;
+    }
+    .ui-panel button {
+      background: #252d40;
+      border: 1px solid #4a5f7a;
+      color: #ddd;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    /* контейнер canvas */
+    .map-container {
+      flex: 1;
+      position: relative;
+      background: #0f1a2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    #gameCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      image-rendering: pixelated;
+      cursor: crosshair;
+      background: #152238;
+    }
+    /* нижняя панель логов и действий */
+    .bottom-panel {
+      height: 120px;
+      background: #141b29;
+      border-top: 2px solid #2a3b50;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      font-size: 0.8rem;
+      overflow-y: auto;
+    }
+    .log-area {
+      padding: 8px 16px;
+      border-bottom: 1px solid #2a3b50;
+      max-height: 60px;
+      overflow-y: auto;
+      color: #b8cbe0;
+      background: #0d1420;
+    }
+    .action-row {
+      display: flex;
+      gap: 8px;
+      padding: 6px 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .action-row button {
+      background: #233147;
+      border: 1px solid #3f5a78;
+      color: #edf2fa;
+      padding: 4px 10px;
+      border-radius: 14px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: 0.1s;
+    }
+    .action-row button:hover {
+      background: #2f4565;
+    }
+    .selected-info {
+      background: #0d1420;
+      padding: 2px 10px;
+      border-radius: 12px;
+      border-left: 3px solid #d4a017;
+      margin-left: 10px;
+      flex: 1;
+    }
+    /* адаптивность */
+    @media (max-width: 700px) {
+      .top-bar {
+        flex-wrap: wrap;
+        height: auto;
+        min-height: 48px;
+      }
+      .resource-panel .res-item span:last-child {
+        display: none;
+      }
+      .bottom-panel {
+        height: 100px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="top-bar">
+    <div class="empire-title">⚔️ ЭПОХА ИМПЕРИЙ</div>
+    <div class="resource-panel" id="resourcePanel"></div>
+    <button class="turn-btn" id="endTurnBtn">⏳ След. ход</button>
+    <div class="ui-panel">
+      <button id="btnDiplomacy">🕊️ Дипломатия</button>
+      <button id="btnTech">🔬 Технологии</button>
+      <button id="btnGovernment">🏛️ Правительство</button>
+    </div>
+  </div>
+  <div class="map-container">
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+  </div>
+  <div class="bottom-panel">
+    <div class="log-area" id="logArea">⚡ Империя пробуждается... Выберите город для управления.</div>
+    <div class="action-row" id="actionRow">
+      <button data-action="build">🏗️ Постройка</button>
+      <button data-action="train">⚔️ Юнит</button>
+      <button data-action="trade">💰 Торговля</button>
+      <button data-action="spy">🕵️ Шпионаж</button>
+      <button data-action="culture">🎭 Культура</button>
+      <div class="selected-info" id="selectedInfo">Выбрано: —</div>
+    </div>
+  </div>
+</div>
+<script>
+  (function(){
+    // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const logArea = document.getElementById('logArea');
+    const selectedInfo = document.getElementById('selectedInfo');
+    const resourcePanel = document.getElementById('resourcePanel');
+    
+    // ========== БАЗОВАЯ ГЕНЕРАЦИЯ МИРА ==========
+    const WORLD_W = 24;
+    const WORLD_H = 18;
+    const TILE_SIZE = 32; // для изометрии
+    
+    // Изометрические коэффициенты
+    const isoX = (x, y) => (x - y) * TILE_SIZE * 0.8 + canvas.width/2;
+    const isoY = (x, y) => (x + y) * TILE_SIZE * 0.4 + canvas.height/3;
+    
+    // Игровое состояние
+    let currentTurn = 0;
+    let selectedCityId = null;
+    let selectedUnitId = null;
+    
+    // Ресурсы игрока
+    let playerGold = 250;
+    let playerFood = 120;
+    let playerScience = 30;
+    let playerCulture = 20;
+    let playerDiplomacy = 10;
+    
+    // ========== КАРТА МИРА ==========
+    const map = [];
+    // типы тайлов: 0=глубокий океан, 1=мелководье, 2=побережье, 3=равнина, 4=лес, 5=холмы, 6=горы, 7=пустыня, 8=тундра
+    function generateWorld() {
+      // континенты (шум)
+      for (let y=0; y<WORLD_H; y++) {
+        map[y] = [];
+        for (let x=0; x<WORLD_W; x++) {
+          // континентальность
+          let continent = Math.sin(x*0.4) * Math.cos(y*0.3) + Math.sin(x*0.1+y*0.2)*0.5;
+          let tile;
+          if (continent < -0.2) tile = 0; // океан
+          else if (continent < 0.1) tile = 1; // мелководье
+          else if (continent < 0.3) tile = 2; // побережье
+          else if (continent < 0.5) tile = 3; // равнина
+          else if (continent < 0.7) tile = 4; // лес
+          else if (continent < 0.8) tile = 5; // холмы
+          else if (continent < 0.9) tile = 6; // горы
+          else tile = 7; // пустыня
+          // ресурсы (добавим)
+          let resource = null;
+          if (tile === 3 && Math.random()<0.3) resource = 'gold';
+          if (tile === 4 && Math.random()<0.4) resource = 'wood';
+          if (tile === 5 && Math.random()<0.3) resource = 'iron';
+          map[y][x] = { type: tile, resource, owner: null, city: null, unit: null, explored: Math.random()<0.4 };
+        }
+      }
+      // гарантированные континенты: создадим пару островов
+      for (let i=3; i<8; i++) for (let j=3; j<6; j++) { map[j][i].type = 3; map[j][i].resource = 'gold'; }
+      for (let i=15; i<20; i++) for (let j=8; j<12; j++) { map[j][i].type = 4; map[j][i].resource = 'iron'; }
+    }
+    generateWorld();
+    
+    // ========== ЦИВИЛИЗАЦИИ (8) ==========
+    const civilizations = [
+      { id:0, name:'Рим', bonus:'+10% золото', color:'#c0392b' },
+      { id:1, name:'Египет', bonus:'+1 еда', color:'#d4ac0d' },
+      { id:2, name:'Греция', bonus:'+культура', color:'#2471a3' },
+      { id:3, name:'Монголия', bonus:'+сила', color:'#7d3c98' },
+      { id:4, name:'Китай', bonus:'+наука', color:'#b03a2e' },
+      { id:5, name:'Персия', bonus:'+торговля', color:'#ca6f1e' },
+      { id:6, name:'Япония', bonus:'+оборона', color:'#1e8449' },
+      { id:7, name:'Ацтеки', bonus:'+воен. опыт', color:'#935116' }
+    ];
+    
+    // ========== ГОРОДА ==========
+    let cities = [];
+    let cityIdCounter = 0;
+    function createCity(x, y, civId=0) {
+      const city = {
+        id: cityIdCounter++,
+        name: ['Рим','Карфаген','Афины','Мемфис','Вавилон','Теночтитлан','Киото','Сузы'][civId] + '-' + Math.floor(Math.random()*100),
+        x, y, civId,
+        buildings: [],
+        population: 4,
+        production: 10,
+        culture: 5,
+        science: 4,
+        gold: 8,
+        defense: 10,
+        religion: 'язычество',
+        tourism: 2
+      };
+      // стартовые постройки
+      city.buildings.push('монумент', 'казармы', 'торговый пост');
+      cities.push(city);
+      map[y][x].city = city;
+      map[y][x].owner = civId;
+      return city;
+    }
+    
+    // стартовые города игрока (civ 0)
+    createCity(5, 5, 0);
+    createCity(6, 6, 0);
+    // города ИИ (противники)
+    createCity(18, 3, 2);
+    createCity(16, 12, 4);
+    createCity(20, 8, 6);
+    
+    // ========== ЮНИТЫ ==========
+    let units = [];
+    let unitIdCounter = 1;
+    function createUnit(type, x, y, civId=0) {
+      const unit = {
+        id: unitIdCounter++,
+        type, x, y, civId,
+        health: 100,
+        attack: type==='воин'?20: type==='корабль'?25:12,
+        moves: 2,
+        isNaval: type==='корабль' || type==='галеон'
+      };
+      units.push(unit);
+      map[y][x].unit = unit;
+      return unit;
+    }
+    // стартовые юниты
+    createUnit('воин', 5, 6, 0);
+    createUnit('воин', 6, 5, 0);
+    createUnit('корабль', 4, 6, 0);
+    createUnit('стрелок', 5, 5, 0);
+    // юниты ИИ
+    createUnit('воин', 18, 4, 2);
+    createUnit('корабль', 17, 3, 2);
+    
+    // ========== ТЕХНОЛОГИИ (30+) ==========
+    const techTree = [
+      'письменность','календарь','обработка бронзы','керамика','конница','строительство','монеты','философия','государство','мореплавание',
+      'инженерия','металлургия','военное дело','религия','драма','поэзия','бумага','компас','архитектура','оптика',
+      'хирургия','навигация','порох','экономика','астрономия','печать','банковское дело','артиллерия','химия','электричество',
+      'паровая машина','социология','радио','атомная энергия','интернет'
+    ];
+    let researchedTechs = ['письменность','календарь'];
+    
+    // ========== ДИПЛОМАТИЯ ==========
+    let diplomacyState = {
+      wars: [2, 6],
+      allies: [1],
+      trades: [{civ:1, resource:'золото', amount:5}],
+      spies: [{civ:4, mission:'разведка', progress:60}]
+    };
+    
+    // ========== ПРАВИТЕЛЬСТВА ==========
+    const governments = ['деспотия','монархия','республика','феодализм','теократия','демократия','коммунизм','империя','плутократия','технократия','социализм'];
+    let currentGovernment = 'монархия';
+    
+    // ========== ДОСТИЖЕНИЯ ==========
+    const achievements = [
+      'Первый город','Великая армия','Торговый путь','Учёный','Культурная столица','Миротворец','Завоеватель','Колонизатор','Наследие','Владыка морей'
+    ];
+    let unlockedAchievements = ['Первый город'];
+    
+    // ========== БОЕВАЯ СИСТЕМА ==========
+    function battle(attacker, defender) {
+      let atk = attacker.attack + (attacker.type==='воин'?10:0);
+      let def = defender.health * 0.4 + (map[defender.y][defender.x].type===5?5:0);
+      let damage = Math.max(5, atk - def/2);
+      defender.health -= damage;
+      if (defender.health <= 0) {
+        // удалить юнит
+        units = units.filter(u => u.id !== defender.id);
+        map[defender.y][defender.x].unit = null;
+        return `${attacker.type} уничтожает ${defender.type}`;
+      }
+      return `${attacker.type} атакует, урон ${Math.round(damage)}`;
+    }
+    
+    // ========== ФУНКЦИИ UI ==========
+    function updateUI() {
+      resourcePanel.innerHTML = `
+        <span class="res-item"><span class="res-icon">🪙</span> <span>${playerGold}</span></span>
+        <span class="res-item"><span class="res-icon">🌾</span> <span>${playerFood}</span></span>
+        <span class="res-item"><span class="res-icon">🔬</span> <span>${playerScience}</span></span>
+        <span class="res-item"><span class="res-icon">🎭</span> <span>${playerCulture}</span></span>
+        <span class="res-item"><span class="res-icon">📜</span> <span>${playerDiplomacy}</span></span>
+      `;
+      const selCity = cities.find(c => c.id === selectedCityId);
+      selectedInfo.textContent = selCity ? `🏰 ${selCity.name} · население ${selCity.population}` : 'Выбрано: —';
+    }
+    
+    function addLog(msg) {
+      logArea.textContent = msg;
+    }
+    
+    // ========== ОТРИСОВКА (ИЗОМЕТРИЯ) ==========
+    function drawMap() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // заливка океана
+      ctx.fillStyle = '#0e2a3a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      for (let y=0; y<WORLD_H; y++) {
+        for (let x=0; x<WORLD_W; x++) {
+          const tile = map[y][x];
+          const px = isoX(x, y);
+          const py = isoY(x, y);
+          
+          // цвет тайла
+          let color = '#2d4a5e';
+          switch (tile.type) {
+            case 0: color = '#103a4e'; break;
+            case 1: color = '#1e5f7a'; break;
+            case 2: color = '#2d8aaa'; break;
+            case 3: color = '#5a8f4a'; break;
+            case 4: color = '#2f6d3a'; break;
+            case 5: color = '#8a7a4a'; break;
+            case 6: color = '#6d6d6d'; break;
+            case 7: color = '#bdb76b'; break;
+            default: color = '#4a6a3a';
+          }
+          if (tile.resource === 'gold') color = '#e6b800';
+          if (tile.resource === 'iron') color = '#7f8c8d';
+          if (tile.resource === 'wood') color = '#3e6b3e';
+          
+          // туман войны: если не исследован, тёмный
+          if (!tile.explored) {
+            color = '#1a1f2a';
+          }
+          
+          // ромб
+          ctx.beginPath();
+          ctx.moveTo(px, py - TILE_SIZE/2);
+          ctx.lineTo(px + TILE_SIZE*0.6, py);
+          ctx.lineTo(px, py + TILE_SIZE/2);
+          ctx.lineTo(px - TILE_SIZE*0.6, py);
+          ctx.fillStyle = color;
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+          
+          // ресурсы
+          if (tile.resource && tile.explored) {
+            ctx.font = '12px serif';
+            ctx.fillStyle = 'gold';
+            ctx.fillText(tile.resource==='gold'?'💰':tile.resource==='iron'?'⛏️':'🌲', px-8, py-4);
+          }
+          
+          // город
+          if (tile.city) {
+            ctx.fillStyle = '#ffd966';
+            ctx.beginPath();
+            ctx.arc(px, py-5, 10, 0, 2*Math.PI);
+            ctx.fill();
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.fillText('🏰', px-7, py+2);
+          }
+          // юнит
+          if (tile.unit) {
+            ctx.fillStyle = '#b33';
+            ctx.beginPath();
+            ctx.arc(px, py-12, 8, 0, 2*Math.PI);
+            ctx.fill();
+            ctx.fillStyle = 'white';
+            ctx.fillText(tile.unit.type==='корабль'?'⚓':'⚔️', px-7, py-7);
+          }
+        }
+      }
+    }
+    
+    // ========== ОБРАБОТКА ДЕЙСТВИЙ ==========
+    function handleAction(action) {
+      const selectedCity = cities.find(c => c.id === selectedCityId);
+      if (!selectedCity) {
+        addLog('⚠️ Выберите город (клик по значку города на карте)');
+        return;
+      }
+      switch(action) {
+        case 'build': {
+          const buildings = ['библиотека','храм','рынок','стена','амфитеатр','верфь','университет','банк','фабрика','обсерватория'];
+          const b = buildings[Math.floor(Math.random()*buildings.length)];
+          selectedCity.buildings.push(b);
+          playerGold -= 20;
+          addLog(`🏗️ Построено: ${b} в городе ${selectedCity.name}`);
+          break;
+        }
+        case 'train': {
+          createUnit('воин', selectedCity.x, selectedCity.y, selectedCity.civId);
+          playerGold -= 30;
+          addLog(`⚔️ Новый воин в ${selectedCity.name}`);
+          break;
+        }
+        case 'trade': {
+          playerGold += 25;
+          playerDiplomacy += 5;
+          addLog('💰 Торговый караван принёс 25 золота');
+          break;
+        }
+        case 'spy': {
+          playerDiplomacy -= 5;
+          addLog('🕵️ Шпион отправлен в чужую столицу');
+          break;
+        }
+        case 'culture': {
+          playerCulture += 15;
+          addLog('🎭 Фестиваль культуры +15');
+          break;
+        }
+        default: return;
+      }
+      updateUI();
+      drawMap();
+    }
+    
+    // ========== ОБРАБОТКА КЛИКА (ВЫБОР) ==========
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      
+      // инвертирование изометрии (приблизительно)
+      for (let y=0; y<WORLD_H; y++) {
+        for (let x=0; x<WORLD_W; x++) {
+          const px = isoX(x, y);
+          const py = isoY(x, y);
+          if (Math.abs(mouseX-px) < 14 && Math.abs(mouseY-py) < 14) {
+            // если город
+            if (map[y][x].city) {
+              selectedCityId = map[y][x].city.id;
+              selectedUnitId = null;
+              addLog(`Выбран город ${map[y][x].city.name}`);
+            } else if (map[y][x].unit) {
+              selectedUnitId = map[y][x].unit.id;
+              selectedCityId = null;
+              addLog(`Выбран юнит ${map[y][x].unit.type}`);
+            } else {
+              // исследовать тайл
+              map[y][x].explored = true;
+              addLog(`Разведка (${x},${y})`);
+            }
+            updateUI();
+            drawMap();
+            return;
+          }
+        }
+      }
+    });
+    
+    // ========== СЛУШАТЕЛИ ==========
+    document.getElementById('endTurnBtn').addEventListener('click', () => {
+      currentTurn++;
+      playerGold += 15 + Math.floor(Math.random()*10);
+      playerFood += 20;
+      playerScience += 8;
+      playerCulture += 4;
+      // исследование технологий
+      if (playerScience > 50 && researchedTechs.length < techTree.length) {
+        const newTech = techTree[researchedTechs.length];
+        researchedTechs.push(newTech);
+        playerScience -= 40;
+        addLog(`🔬 Изучено: ${newTech}`);
+      }
+      addLog(`⏳ Ход ${currentTurn} · Ресурсы обновлены`);
+      // случайные события
+      if (Math.random() < 0.2) {
+        playerGold += 20;
+        addLog('💰 Найдены залежи золота');
+      }
+      updateUI();
+      drawMap();
+    });
+    
+    document.getElementById('btnDiplomacy').addEventListener('click', () => {
+      addLog('🕊️ Дипломатия: союзы с [1], войны с [2,6], торговля активна');
+    });
+    document.getElementById('btnTech').addEventListener('click', () => {
+      addLog(`🔬 Технологии: ${researchedTechs.join(', ')||'нет'} · доступно: ${techTree[researchedTechs.length]}`);
+    });
+    document.getElementById('btnGovernment').addEventListener('click', () => {
+      const nextGov = governments[(governments.indexOf(currentGovernment)+1)%governments.length];
+      currentGovernment = nextGov;
+      addLog(`🏛️ Правительство: ${currentGovernment}`);
+    });
+    
+    // привязка кнопок действий
+    document.querySelectorAll('.action-row button').forEach(btn => {
+      btn.addEventListener('click', (e) => handleAction(e.target.dataset.action));
+    });
+    
+    // ========== ДОСТИЖЕНИЯ / ВИЗУАЛИЗАЦИЯ ==========
+    function checkAchievements() {
+      if (cities.length >= 3 && !unlockedAchievements.includes('Колонизатор')) {
+        unlockedAchievements.push('Колонизатор');
+        addLog('🏆 Достижение: Колонизатор');
+      }
+    }
+    
+    // ========== ИНИЦИАЛИЗАЦИЯ ==========
+    function init() {
+      // исследовать стартовую область
+      for (let y=2; y<10; y++) for (let x=2; x<10; x++) if (map[y] && map[y][x]) map[y][x].explored = true;
+      updateUI();
+      drawMap();
+      addLog('⚡ Империя основана. Управляйте городами, нажимая на них. Или стройте юнитов.');
+    }
+    
+    init();
+    
+    // адаптивность canvas
+    function resizeCanvas() {
+      const container = document.querySelector('.map-container');
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      drawMap();
+    }
+    window.addEventListener('resize', resizeCanvas);
+    setTimeout(resizeCanvas, 50);
+    
+  })();
+</script>
+</body>
+</html>
