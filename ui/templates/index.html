@@ -124,6 +124,9 @@
             color: white;
             border: 1px solid rgba(95, 127, 255, 0.3);
         }
+        .mode-btn.facts.active { background: rgba(100, 200, 255, 0.2); border-color: rgba(100, 200, 255, 0.3); }
+        .mode-btn.interpretations.active { background: rgba(200, 100, 255, 0.2); border-color: rgba(200, 100, 255, 0.3); }
+        .mode-btn.mixed.active { background: rgba(255, 215, 0, 0.2); border-color: rgba(255, 215, 0, 0.3); }
 
         /* ===== ЧАТ ===== */
         .chat-container {
@@ -430,13 +433,13 @@
     </div>
     <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
         <div class="lang-switcher">
-            <button class="lang-btn active" data-lang="ru" onclick="setLanguage('ru')">🇷🇺 RU</button>
-            <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">🇬🇧 EN</button>
+            <button class="lang-btn active" data-lang="ru" id="langRu">🇷🇺 RU</button>
+            <button class="lang-btn" data-lang="en" id="langEn">🇬🇧 EN</button>
         </div>
         <div class="mode-selector">
-            <button class="mode-btn facts" data-mode="facts" onclick="setMode('facts')">📊 <span class="mode-label">Факты</span></button>
-            <button class="mode-btn interpretations" data-mode="interpretations" onclick="setMode('interpretations')">🔮 <span class="mode-label">Интерпретации</span></button>
-            <button class="mode-btn mixed active" data-mode="mixed" onclick="setMode('mixed')">🎯 <span class="mode-label">Смешанный</span></button>
+            <button class="mode-btn facts" data-mode="facts">📊 Факты</button>
+            <button class="mode-btn interpretations" data-mode="interpretations">🔮 Интерпретации</button>
+            <button class="mode-btn mixed active" data-mode="mixed">🎯 Смешанный</button>
         </div>
     </div>
 </div>
@@ -444,7 +447,7 @@
 <!-- ===== ЧАТ ===== -->
 <div class="chat-container" id="chatContainer">
     <div class="message agent">
-        <div class="role">🧠 <span class="role-label">Система</span></div>
+        <div class="role">🧠 Система</div>
         <div class="text" id="welcomeMessage">
             Привет! Я — <b>Molecular AI v7.0</b> с самообучением 🧠<br><br>
             📤 Загружайте файлы и картинки!<br>
@@ -461,27 +464,27 @@
 <div class="control-panel">
     <div class="group">
         <span class="group-label">📁</span>
-        <button class="ctrl-btn success" onclick="document.getElementById('fileInput').click()" id="uploadBtn">📎 Загрузить</button>
-        <button class="ctrl-btn" onclick="clearChat()" id="clearBtn">🗑 Очистить</button>
+        <button class="ctrl-btn success" id="uploadBtn">📎 Загрузить</button>
+        <button class="ctrl-btn" id="clearBtn">🗑 Очистить</button>
     </div>
     <div class="group">
         <span class="group-label">🤖</span>
-        <button class="ctrl-btn primary" onclick="changeAgents(5)">5</button>
-        <button class="ctrl-btn primary" onclick="changeAgents(10)">10</button>
-        <button class="ctrl-btn primary" onclick="changeAgents(20)">20</button>
-        <button class="ctrl-btn success" onclick="changeAgents(30)">30</button>
-        <button class="ctrl-btn" onclick="getAgentsInfo()" id="infoBtn">📊 Инфо</button>
+        <button class="ctrl-btn primary" data-agents="5">5</button>
+        <button class="ctrl-btn primary" data-agents="10">10</button>
+        <button class="ctrl-btn primary" data-agents="20">20</button>
+        <button class="ctrl-btn success" data-agents="30">30</button>
+        <button class="ctrl-btn" id="infoBtn">📊 Инфо</button>
     </div>
     <div class="group">
         <span class="group-label">📊</span>
-        <button class="ctrl-btn primary" onclick="askQuestion('/learning')" id="statsBtn">📈 Статистика</button>
-        <button class="ctrl-btn primary" onclick="askQuestion('/rate 0.8')" id="rateBtn">⭐ Оценить</button>
+        <button class="ctrl-btn primary" data-command="/learning">📈 Статистика</button>
+        <button class="ctrl-btn primary" data-command="/rate 0.8">⭐ Оценить</button>
     </div>
     <div class="group">
         <span class="group-label">💻</span>
-        <button class="ctrl-btn" onclick="askQuestion('Напиши код калькулятора на Python')" id="pythonBtn">🐍 Python</button>
-        <button class="ctrl-btn" onclick="askQuestion('Создай HTML страницу с формой')" id="htmlBtn">🌐 HTML</button>
-        <button class="ctrl-btn" onclick="askQuestion('Расскажи о себе')" id="aboutBtn">🧠 О системе</button>
+        <button class="ctrl-btn" data-question="Напиши код калькулятора на Python">🐍 Python</button>
+        <button class="ctrl-btn" data-question="Создай HTML страницу с формой">🌐 HTML</button>
+        <button class="ctrl-btn" data-question="Расскажи о себе">🧠 О системе</button>
     </div>
 </div>
 
@@ -495,8 +498,8 @@
     <div class="input-wrapper">
         <input id="questionInput" placeholder="Задайте вопрос, напишите код или загрузите файл..." 
                onkeypress="if(event.key==='Enter') askQuestion()">
-        <button class="input-btn" onclick="document.getElementById('fileInput').click()" title="Загрузить файл">📎</button>
-        <button class="input-btn send" id="sendButton" onclick="askQuestion()">➤</button>
+        <button class="input-btn" id="fileBtn" title="Загрузить файл">📎</button>
+        <button class="input-btn send" id="sendButton">➤</button>
     </div>
 </div>
 
@@ -505,179 +508,465 @@
 
 <script>
     // ================================================================
-    // ПЕРЕВОДЫ
+    // СОСТОЯНИЕ
     // ================================================================
-    const translations = {
-        ru: {
-            // Хедер
-            title: '🧬 Ultimate System v7.0',
-            sync: 'sync',
-            agents: 'агентов',
-            learning: '🧠 обучение',
-            
-            // Режимы
-            facts: 'Факты',
-            interpretations: 'Интерпретации',
-            mixed: 'Смешанный',
-            
-            // Роли
-            system: 'Система',
-            user: 'Вы',
-            meta: 'Мета-инфо',
-            
-            // Чат
-            welcome: 'Привет! Я — <b>Molecular AI v7.0</b> с самообучением 🧠\n\n📤 Загружайте файлы и картинки!\n• Нажмите 📎 или перетащите файл в окно\n• Поддерживаются: изображения, PDF, документы, код\n\n📊 Режимы: Факты | Интерпретации | Смешанный\n🧠 Команды: /learning | /rate 0.8 | /clear\n🤖 Агенты: 5/10/20/30',
-            clear_chat: '🧹 Чат очищен. Задайте новый вопрос!',
-            thinking: '🧠 Система обрабатывает...',
-            
-            // Кнопки
-            upload: '📎 Загрузить',
-            clear: '🗑 Очистить',
-            info: '📊 Инфо',
-            stats: '📈 Статистика',
-            rate: '⭐ Оценить',
-            python: '🐍 Python',
-            html: '🌐 HTML',
-            about: '🧠 О системе',
-            
-            // Ввод
-            placeholder: 'Задайте вопрос, напишите код или загрузите файл...',
-            send: '➤',
-            files: '📎 Файлы:',
-            
-            // Сообщения
-            processing: '⏳ Обработка...',
-            error_init: '❌ Ошибка инициализации:',
-            error_api: '❌ Ошибка:',
-            unknown: '❌ Неизвестная команда',
-            help: '📚 ДОСТУПНЫЕ КОМАНДЫ:\n\n📊 /learning — статистика обучения\n⭐ /rate 0.8 — оценить последний ответ\n🔥 /skill [задача] — создать навык\n📚 /skills — список навыков\n📊 /skill_stats — статистика навыков\n💤 /sleep — очистка слабых навыков\n🧹 /clear — очистить чат\n🤖 /agents — информация об агентах\n📁 /projects — список проектов\n👁️ /preview — открыть HTML в браузере\nℹ️ /info — информация о проекте',
-            
-            // Агенты
-            agents_info: '🤖 ИНФОРМАЦИЯ ОБ АГЕНТАХ:\n\n👥 Количество: {agents}\n🌀 Синхронизация: {sync}\n📊 Среднее настроение: {mood}\n📈 Шагов: {steps}',
-            agents_limit: '⚠️ Количество агентов должно быть от 3 до 50',
-            agents_ready: '✅ Система с {count} агентами готова!',
-            agents_changing: '🔄 Переинициализация с {count} агентами...',
-        },
-        en: {
-            // Header
-            title: '🧬 Ultimate System v7.0',
-            sync: 'sync',
-            agents: 'agents',
-            learning: '🧠 learning',
-            
-            // Modes
-            facts: 'Facts',
-            interpretations: 'Interpretations',
-            mixed: 'Mixed',
-            
-            // Roles
-            system: 'System',
-            user: 'You',
-            meta: 'Meta-info',
-            
-            // Chat
-            welcome: 'Hi! I\'m <b>Molecular AI v7.0</b> with self-learning 🧠\n\n📤 Upload files and images!\n• Click 📎 or drag files into the window\n• Supported: images, PDF, documents, code\n\n📊 Modes: Facts | Interpretations | Mixed\n🧠 Commands: /learning | /rate 0.8 | /clear\n🤖 Agents: 5/10/20/30',
-            clear_chat: '🧹 Chat cleared. Ask a new question!',
-            thinking: '🧠 System processing...',
-            
-            // Buttons
-            upload: '📎 Upload',
-            clear: '🗑 Clear',
-            info: '📊 Info',
-            stats: '📈 Stats',
-            rate: '⭐ Rate',
-            python: '🐍 Python',
-            html: '🌐 HTML',
-            about: '🧠 About',
-            
-            // Input
-            placeholder: 'Ask a question, write code or upload file...',
-            send: '➤',
-            files: '📎 Files:',
-            
-            // Messages
-            processing: '⏳ Processing...',
-            error_init: '❌ Initialization error:',
-            error_api: '❌ Error:',
-            unknown: '❌ Unknown command',
-            help: '📚 AVAILABLE COMMANDS:\n\n📊 /learning — learning statistics\n⭐ /rate 0.8 — rate last answer\n🔥 /skill [task] — create skill\n📚 /skills — list skills\n📊 /skill_stats — skill statistics\n💤 /sleep — clear weak skills\n🧹 /clear — clear chat\n🤖 /agents — agent info\n📁 /projects — project list\n👁️ /preview — preview HTML\nℹ️ /info — project info',
-            
-            // Agents
-            agents_info: '🤖 AGENT INFORMATION:\n\n👥 Count: {agents}\n🌀 Synchronization: {sync}\n📊 Average mood: {mood}\n📈 Steps: {steps}',
-            agents_limit: '⚠️ Agent count must be between 3 and 50',
-            agents_ready: '✅ System with {count} agents ready!',
-            agents_changing: '🔄 Reinitializing with {count} agents...',
+    let isProcessing = false;
+    let currentMode = 'mixed';
+    let uploadedFiles = [];
+    let isInitialized = false;
+
+    // ================================================================
+    // API
+    // ================================================================
+    async function api(method, endpoint, data = null) {
+        try {
+            const resp = await fetch('/api' + endpoint, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: data ? JSON.stringify(data) : null
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            return await resp.json();
+        } catch (e) {
+            console.error('API Error:', e);
+            throw e;
         }
-    };
-
-    let currentLang = 'ru';
-
-    // ================================================================
-    // ФУНКЦИИ ПЕРЕВОДА
-    // ================================================================
-    function t(key) {
-        return translations[currentLang]?.[key] || key;
     }
 
-    function updateLanguage() {
-        // Обновляем все тексты на странице
-        document.querySelectorAll('[data-i18n]').forEach(el => {
-            const key = el.dataset.i18n;
-            el.textContent = t(key);
-        });
+    // ================================================================
+    // ЧАТ
+    // ================================================================
+    function addMessage(role, content, isThinking = false, extra = null) {
+        const container = document.getElementById('chatContainer');
+        const div = document.createElement('div');
+        div.className = `message ${role}`;
+
+        if (isThinking) {
+            div.innerHTML = `
+                <div class="role">🧠 Система обрабатывает...</div>
+                <div class="thinking">
+                    <span></span><span></span><span></span>
+                </div>
+            `;
+        } else {
+            const roleIcon = role === 'user' ? '👤' : role === 'meta' ? '📊' : '🧠';
+            const roleName = role === 'user' ? 'Вы' : role === 'meta' ? 'Мета-инфо' : 'Ответ';
+            let textContent = content || '';
+
+            if (extra && extra.files && extra.files.length > 0) {
+                let filesHtml = '';
+                extra.files.forEach(f => {
+                    if (f.type && f.type.startsWith('image/')) {
+                        filesHtml += `<img src="${f.data}" alt="${f.name}">`;
+                    } else {
+                        const icon = f.type && f.type.startsWith('image/') ? '🖼️' : '📄';
+                        filesHtml += `<div class="file-attachment"><span class="icon">${icon}</span> ${f.name} (${(f.size / 1024).toFixed(1)} KB)</div>`;
+                    }
+                });
+                textContent = content + filesHtml;
+            }
+
+            div.innerHTML = `
+                <div class="role">${roleIcon} ${roleName}</div>
+                <div class="text">${textContent}</div>
+            `;
+        }
+
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+        return div;
+    }
+
+    function clearChat() {
+        document.getElementById('chatContainer').innerHTML = `
+            <div class="message agent">
+                <div class="role">🧠 Система</div>
+                <div class="text">🧹 Чат очищен. Задайте новый вопрос!</div>
+            </div>
+        `;
+    }
+
+    // ================================================================
+    // ФАЙЛЫ
+    // ================================================================
+    function handleFiles(files) {
+        const preview = document.getElementById('filePreview');
         
-        // Обновляем плейсхолдер
+        for (let file of files) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const fileData = {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    data: e.target.result
+                };
+                uploadedFiles.push(fileData);
+                
+                const label = preview.querySelector('.label');
+                if (label && uploadedFiles.length === 1) {
+                    label.textContent = '📎 Файлы:';
+                }
+                
+                const item = document.createElement('div');
+                item.className = 'file-preview-item';
+                const icon = file.type.startsWith('image/') ? '🖼️' : '📄';
+                const nameShort = file.name.length > 20 ? file.name.substring(0, 18) + '…' : file.name;
+                item.innerHTML = `
+                    ${icon} ${nameShort} (${(file.size / 1024).toFixed(1)} KB)
+                    <span class="remove" onclick="this.parentElement.remove(); removeFile('${file.name}')">✕</span>
+                `;
+                preview.appendChild(item);
+            };
+            
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function removeFile(fileName) {
+        uploadedFiles = uploadedFiles.filter(f => f.name !== fileName);
+        const preview = document.getElementById('filePreview');
+        const label = preview.querySelector('.label');
+        if (uploadedFiles.length === 0 && label) {
+            label.textContent = '📎 Файлы:';
+        }
+    }
+
+    // ================================================================
+    // УПРАВЛЕНИЕ АГЕНТАМИ
+    // ================================================================
+    async function changeAgents(count) {
+        if (isProcessing) return;
+        if (count < 3 || count > 50) {
+            addMessage('agent', '⚠️ Количество агентов должно быть от 3 до 50');
+            return;
+        }
+        
+        isProcessing = true;
+        addMessage('agent', `🔄 Переинициализация с ${count} агентами...`);
+        
+        try {
+            const result = await api('POST', '/init', { 
+                n_agents: count,
+                dt: 0.02,
+                noise: 0.03
+            });
+            
+            if (result.status === 'ok') {
+                isInitialized = true;
+                document.getElementById('agentStatus').textContent = `${count} агентов`;
+                addMessage('agent', `✅ Система с ${count} агентами готова!`);
+                if (result.sync_r !== undefined) {
+                    addMessage('meta', `🌀 Синхронизация: ${result.sync_r.toFixed(3)}`);
+                }
+                await updateStatus();
+            } else {
+                addMessage('agent', '❌ Ошибка: ' + (result.error || 'Неизвестная ошибка'));
+            }
+        } catch (error) {
+            addMessage('agent', '❌ Ошибка: ' + error.message);
+        }
+        
+        isProcessing = false;
+    }
+
+    async function getAgentsInfo() {
+        try {
+            const state = await api('GET', '/state');
+            let info = '🤖 ИНФОРМАЦИЯ ОБ АГЕНТАХ:\n\n';
+            info += `👥 Количество: ${state.agents || 0}\n`;
+            info += `🌀 Синхронизация: ${(state.sync_r || 0).toFixed(3)}\n`;
+            info += `📊 Среднее настроение: ${(state.mean_mood || 0).toFixed(2)}\n`;
+            info += `📈 Шагов: ${state.step || 0}\n`;
+            if (state.learning) {
+                info += `🧠 Записей в базе: ${state.learning.knowledge_base?.total_entries || 0}\n`;
+            }
+            addMessage('meta', info);
+        } catch (e) {
+            addMessage('agent', '❌ Ошибка: ' + e.message);
+        }
+    }
+
+    // ================================================================
+    // ОСНОВНЫЕ ФУНКЦИИ
+    // ================================================================
+    async function setMode(mode) {
+        currentMode = mode;
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.mode-btn.${mode}`).classList.add('active');
+        try {
+            await api('POST', '/mode', { mode: mode });
+        } catch (e) {}
+    }
+
+    async function initSystem() {
+        if (isInitialized) return;
+        try {
+            const result = await api('POST', '/init', { n_agents: 10 });
+            if (result.status === 'ok') {
+                isInitialized = true;
+                addMessage('agent', '✅ Система инициализирована с 10 агентами');
+                updateStatus();
+            }
+        } catch (e) {
+            addMessage('agent', '❌ Ошибка инициализации: ' + e.message);
+        }
+    }
+
+    async function askQuestion(question = null) {
+        if (isProcessing) return;
+
         const input = document.getElementById('questionInput');
-        if (input) input.placeholder = t('placeholder');
-        
-        // Обновляем кнопки
-        document.getElementById('uploadBtn').textContent = t('upload');
-        document.getElementById('clearBtn').textContent = t('clear');
-        document.getElementById('infoBtn').textContent = t('info');
-        document.getElementById('statsBtn').textContent = t('stats');
-        document.getElementById('rateBtn').textContent = t('rate');
-        document.getElementById('pythonBtn').textContent = t('python');
-        document.getElementById('htmlBtn').textContent = t('html');
-        document.getElementById('aboutBtn').textContent = t('about');
-        document.getElementById('filesLabel').textContent = t('files');
-        
-        // Обновляем режимы
-        document.querySelectorAll('.mode-label').forEach(el => {
-            const mode = el.closest('.mode-btn')?.dataset.mode;
-            if (mode === 'facts') el.textContent = t('facts');
-            else if (mode === 'interpretations') el.textContent = t('interpretations');
-            else if (mode === 'mixed') el.textContent = t('mixed');
-        });
-        
-        // Обновляем статус
-        document.getElementById('learningStatus').textContent = t('learning');
-        document.getElementById('agentStatus').textContent = `${state.agents || 10} ${t('agents')}`;
-        
-        // Сохраняем язык
-        localStorage.setItem('lang', currentLang);
+        const button = document.getElementById('sendButton');
+
+        if (!question) {
+            question = input.value.trim();
+            if (!question && uploadedFiles.length === 0) return;
+            input.value = '';
+        }
+
+        isProcessing = true;
+        button.disabled = true;
+        button.textContent = '⏳';
+
+        const fileCopy = uploadedFiles.length > 0 ? [...uploadedFiles] : [];
+        let extra = null;
+        if (fileCopy.length > 0) {
+            extra = { files: fileCopy };
+            const fileInfo = fileCopy.map(f => `[${f.name}]`).join(' ');
+            question = question ? `${question} (Файлы: ${fileInfo})` : `Анализ файлов: ${fileInfo}`;
+        }
+
+        const filesToSend = fileCopy.map(f => ({
+            name: f.name,
+            type: f.type,
+            size: f.size,
+            data: f.data
+        }));
+
+        addMessage('user', question, false, extra);
+        const thinkingMsg = addMessage('agent', '', true);
+
+        try {
+            const result = await api('POST', '/ask', {
+                question: question,
+                mode: currentMode,
+                files: filesToSend
+            });
+
+            thinkingMsg.remove();
+
+            if (result.error) {
+                addMessage('agent', '❌ Ошибка: ' + result.error);
+            } else if (result.type === 'self_description') {
+                addMessage('agent', result.content);
+            } else if (result.type === 'answer') {
+                addMessage('agent', result.content);
+            } else if (result.type === 'code') {
+                let codeText = '💻 ' + result.message + '\n\n';
+                if (result.files) {
+                    result.files.forEach(f => {
+                        codeText += `📄 ${f.name} (${f.size} KB)\n`;
+                    });
+                }
+                if (result.project_dir) {
+                    codeText += `\n📂 Папка: ${result.project_dir}`;
+                }
+                if (result.edit_hint) {
+                    codeText += `\n\n💡 ${result.edit_hint}`;
+                }
+                addMessage('agent', codeText);
+            } else if (result.type === 'command') {
+                addMessage('meta', result.content);
+            } else {
+                addMessage('agent', '📊 ' + JSON.stringify(result, null, 2));
+            }
+
+            uploadedFiles = [];
+            document.getElementById('filePreview').innerHTML = '<span class="label">📎 Файлы:</span>';
+            updateStatus();
+
+        } catch (error) {
+            thinkingMsg.remove();
+            addMessage('agent', '❌ Ошибка: ' + error.message);
+        }
+
+        isProcessing = false;
+        button.disabled = false;
+        button.textContent = '➤';
     }
+
+    // ================================================================
+    // СТАТУС
+    // ================================================================
+    async function updateStatus() {
+        try {
+            const state = await api('GET', '/state');
+            if (state.sync_r !== undefined) {
+                document.getElementById('syncStatus').textContent = `sync: ${state.sync_r.toFixed(3)}`;
+            }
+            if (state.agents !== undefined) {
+                document.getElementById('agentStatus').textContent = `${state.agents} агентов`;
+            }
+            if (state.learning) {
+                const total = state.learning.knowledge_base?.total_entries || 0;
+                document.getElementById('learningStatus').textContent = `🧠 ${total} записей`;
+            }
+        } catch (e) {}
+    }
+
+    // ================================================================
+    // ПЕРЕКЛЮЧЕНИЕ ЯЗЫКА
+    // ================================================================
+    let currentLang = 'ru';
 
     function setLanguage(lang) {
         currentLang = lang;
         document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
         document.querySelector(`.lang-btn[data-lang="${lang}"]`).classList.add('active');
-        updateLanguage();
-    }
-
-    // Загружаем сохранённый язык
-    const savedLang = localStorage.getItem('lang');
-    if (savedLang && ['ru', 'en'].includes(savedLang)) {
-        currentLang = savedLang;
-        document.querySelector(`.lang-btn[data-lang="${savedLang}"]`)?.classList.add('active');
-        document.querySelector(`.lang-btn[data-lang="${savedLang === 'ru' ? 'en' : 'ru'}"]`)?.classList.remove('active');
+        localStorage.setItem('lang', lang);
     }
 
     // ================================================================
-    // ОСТАЛЬНОЙ КОД (СОХРАНЁННЫЙ)
+    // ЗАПУСК
     // ================================================================
-    
-    // ... Весь остальной JavaScript остаётся без изменений ...
-    // Но с использованием t() для перевода сообщений
+    window.onload = function() {
+        // Загружаем сохранённый язык
+        const savedLang = localStorage.getItem('lang');
+        if (savedLang && ['ru', 'en'].includes(savedLang)) {
+            setLanguage(savedLang);
+        }
+
+        // Инициализация через 1 секунду
+        setTimeout(initSystem, 1000);
+        setInterval(updateStatus, 3000);
+        console.log('📎 Перетащите файлы в окно чата для загрузки');
+    };
+
+    // ================================================================
+    // ОБРАБОТЧИКИ СОБЫТИЙ (все через addEventListener)
+    // ================================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Режимы ---
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const mode = this.dataset.mode;
+                if (mode) setMode(mode);
+            });
+        });
+
+        // --- Переключение языка ---
+        document.getElementById('langRu').addEventListener('click', function() {
+            setLanguage('ru');
+        });
+        document.getElementById('langEn').addEventListener('click', function() {
+            setLanguage('en');
+        });
+
+        // --- Кнопки с вопросами ---
+        document.querySelectorAll('[data-question]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const question = this.dataset.question;
+                if (question) askQuestion(question);
+            });
+        });
+
+        // --- Кнопки с командами ---
+        document.querySelectorAll('[data-command]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const command = this.dataset.command;
+                if (command) askQuestion(command);
+            });
+        });
+
+        // --- Кнопки с количеством агентов ---
+        document.querySelectorAll('[data-agents]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const count = parseInt(this.dataset.agents);
+                if (count) changeAgents(count);
+            });
+        });
+
+        // --- Кнопка отправки ---
+        document.getElementById('sendButton').addEventListener('click', function() {
+            askQuestion();
+        });
+
+        // --- Поле ввода (Enter) ---
+        document.getElementById('questionInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                askQuestion();
+            }
+        });
+
+        // --- Кнопка очистки ---
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            clearChat();
+        });
+
+        // --- Кнопка информации об агентах ---
+        document.getElementById('infoBtn').addEventListener('click', function() {
+            getAgentsInfo();
+        });
+
+        // --- Кнопка загрузки файлов ---
+        document.getElementById('uploadBtn').addEventListener('click', function() {
+            document.getElementById('fileInput').click();
+        });
+        document.getElementById('fileBtn').addEventListener('click', function() {
+            document.getElementById('fileInput').click();
+        });
+
+        // --- Обработка выбора файлов ---
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            if (this.files.length > 0) {
+                const fileList = Array.from(this.files);
+                handleFiles(fileList);
+                const fileNames = fileList.map(f => f.name).join(', ');
+                const fileData = uploadedFiles.map(f => ({ ...f }));
+                addMessage('user', `📎 Загружены файлы: ${fileNames}`, false, { files: fileData });
+            }
+            this.value = '';
+        });
+
+        // --- Drag & Drop ---
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            document.querySelector('.input-wrapper').style.borderColor = '#4a9eff';
+        });
+
+        document.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            document.querySelector('.input-wrapper').style.borderColor = 'rgba(95, 127, 255, 0.2)';
+        });
+
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            document.querySelector('.input-wrapper').style.borderColor = 'rgba(95, 127, 255, 0.2)';
+            if (e.dataTransfer.files.length > 0) {
+                const fileList = Array.from(e.dataTransfer.files);
+                handleFiles(fileList);
+                const fileNames = fileList.map(f => f.name).join(', ');
+                const fileData = uploadedFiles.map(f => ({ ...f }));
+                addMessage('user', `📎 Перетащены файлы: ${fileNames}`, false, { files: fileData });
+            }
+        });
+
+        console.log('✅ Все обработчики событий загружены');
+    });
+
+    // ================================================================
+    // ГЛОБАЛЬНЫЕ ФУНКЦИИ (для обратной совместимости)
+    // ================================================================
+    window.setMode = setMode;
+    window.askQuestion = askQuestion;
+    window.clearChat = clearChat;
+    window.initSystem = initSystem;
+    window.changeAgents = changeAgents;
+    window.getAgentsInfo = getAgentsInfo;
+    window.setLanguage = setLanguage;
 </script>
 </body>
 </html>
