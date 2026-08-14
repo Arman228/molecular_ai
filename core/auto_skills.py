@@ -439,9 +439,9 @@ class SkillRegistryEvolver:
         return best_name
 
 
-# ---------------------------------------------------------------------------
-# AutoSkillEngine
-# ---------------------------------------------------------------------------
+# ================================================================
+# AUTO SKILL ENGINE
+# ================================================================
 
 class AutoSkillEngine:
     def __init__(self, use_llm: bool = False, adapter=None):
@@ -459,7 +459,6 @@ class AutoSkillEngine:
         }
 
     def _skill_exists(self, keywords: List[str]) -> bool:
-        """Check if a skill already exists in registry for given keywords."""
         if not keywords:
             return False
         for kw in keywords:
@@ -476,11 +475,9 @@ class AutoSkillEngine:
         if required_keywords is None:
             required_keywords = self._extract_keywords(task)
 
-        # Check if skill already exists in registry
         if self._skill_exists(required_keywords):
             return None
 
-        # If required keywords exist, try to generate from template
         if required_keywords:
             for kw in required_keywords:
                 for key in self.generator.MOCK_TEMPLATES.keys():
@@ -512,7 +509,6 @@ class AutoSkillEngine:
         return candidate if accepted else None
 
     def evolve_from_feedback(self, skill_name: str, success: bool):
-        """External feedback loop: task succeeded/failed using this skill."""
         self.registry.record_usage(skill_name, success)
 
     def sleep(self) -> List[str]:
@@ -533,3 +529,17 @@ class AutoSkillEngine:
             stop_words = {"this", "that", "with", "from"}
             found = [w for w in words if len(w) > 3 and w not in stop_words]
         return found[:10]
+
+
+# ================================================================
+# HELPERS
+# ================================================================
+
+def attach_to_system(system, use_llm: bool = False, adapter=None) -> AutoSkillEngine:
+    """
+    Attach AutoSkillEngine to a MolecularSystem instance.
+    Adds `system.auto_skill` attribute.
+    """
+    engine = AutoSkillEngine(use_llm=use_llm, adapter=adapter)
+    system.auto_skill = engine
+    return engine
