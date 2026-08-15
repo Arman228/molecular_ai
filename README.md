@@ -227,4 +227,4 @@ Bilingual UI — Russian and English interface
 
 AutoSkillEngine — Self-created skills system
 
-MetaOptimizer — Automatic hyperparameter optimization
+MetaOptimizer — Automatic hyperparameter optimization"# molecular_ai" 
